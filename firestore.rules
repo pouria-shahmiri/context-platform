@@ -15,6 +15,11 @@ service cloud.firestore {
       
       // Allow read/update/delete if the user owns the document
       allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      // Chat subcollection
+      match /chat/{messageId} {
+        allow read, write: if request.auth != null && get(/databases/$(database)/documents/pyramids/$(pyramidId)).data.userId == request.auth.uid;
+      }
     }
   }
 }

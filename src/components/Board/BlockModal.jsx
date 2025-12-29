@@ -79,13 +79,23 @@ Answer: ${h.answer || "N/A"}
   }, [block]);
 
   const handleSave = () => {
+    // Special handling for the last block (8-H / 7-7)
+    const isLastBlock = block.id === '7-7';
+    
+    // Status logic: 
+    // - Normal blocks: require both answer (to previous) and question (new insight)
+    // - Last block: requires only answer (to combined question)
+    const isComplete = isLastBlock ? !!answer : (answer && question);
+
     onSave({
       ...block,
       answer,
-      question, // We use 'question' as the primary content now
+      question: isLastBlock ? '' : question, // No new question for last block
       combinedQuestion,
-      content: question, // Keep content synced for backward compatibility
-      status: answer && question ? 'completed' : 'in_progress'
+      // For last block, use answer as content so it displays on the board
+      // For others, use question as content
+      content: isLastBlock ? answer : question, 
+      status: isComplete ? 'completed' : 'in_progress'
     });
     onClose();
   };
@@ -305,34 +315,36 @@ Answer: ${h.answer || "N/A"}
           )}
 
           {/* New Question Input */}
-          <Box>
-            <Flex justify="between" align="center" className="mb-1">
-              <Text as="label" size="2" weight="bold">
-                New Question / Insight
-              </Text>
-              <Flex gap="2">
-                <Button 
-                    size="1" 
-                    variant="ghost" 
-                    color="purple" 
-                    onClick={handleAiGenerate}
-                    disabled={isGenerating}
-                >
-                    <Sparkles size={14} className="mr-1" />
-                    {isGenerating ? 'Generating...' : 'AI Suggestion'}
-                </Button>
-              </Flex>
-            </Flex>
+          {block.id !== '7-7' && (
+            <Box>
+                <Flex justify="between" align="center" className="mb-1">
+                <Text as="label" size="2" weight="bold">
+                    New Question / Insight
+                </Text>
+                <Flex gap="2">
+                    <Button 
+                        size="1" 
+                        variant="ghost" 
+                        color="purple" 
+                        onClick={handleAiGenerate}
+                        disabled={isGenerating}
+                    >
+                        <Sparkles size={14} className="mr-1" />
+                        {isGenerating ? 'Generating...' : 'AI Suggestion'}
+                    </Button>
+                </Flex>
+                </Flex>
 
-            <TextArea 
-              placeholder="What is the key question or insight for this block?" 
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              rows={3}
-              style={{ minHeight: '100px', resize: 'vertical' }}
-            />
-            {renderSuggestions('question')}
-          </Box>
+                <TextArea 
+                placeholder="What is the key question or insight for this block?" 
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                rows={3}
+                style={{ minHeight: '100px', resize: 'vertical' }}
+                />
+                {renderSuggestions('question')}
+            </Box>
+          )}
         </Flex>
 
         <Flex gap="3" mt="4" justify="end">

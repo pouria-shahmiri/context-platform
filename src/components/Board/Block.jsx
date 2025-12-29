@@ -7,16 +7,43 @@ const Block = ({ block, onClick, isSelected }) => {
   const { x, y } = calculateCoordinates(block.u, block.v);
   const isWhite = (block.u + block.v) % 2 === 0;
   
-  // Chess colors
+  // Base Colors (Chess board style)
   const bgColor = isWhite ? 'bg-[#f0d9b5]' : 'bg-[#b58863]';
   const textColor = isWhite ? 'text-[#b58863]' : 'text-[#f0d9b5]';
+
+  // Determine border color based on type
+  // Question only: Blue border
+  // Answer-Question (Combined/Complete): Green border
+  // Partial/Combined logic can be refined:
+  // If we want to strictly follow user request "Color-code block types: Question only: Blue, Answer-Question: Green, Combined: Orange"
+  // But we are also maintaining the chess board look.
+  // Strategy: Use a colored border or glow to indicate type, preserving the chess background.
   
-  // Selection style
+  let typeColorClass = '';
+  const hasQuestion = block.question && block.question.trim().length > 0;
+  const hasAnswer = block.answer && block.answer.trim().length > 0;
+  const parentCount = block.parentIds ? block.parentIds.length : 0;
+
+  if (hasQuestion && !hasAnswer) {
+    typeColorClass = 'border-blue-500 border-2'; // Question only
+  } else if (hasQuestion && hasAnswer) {
+    typeColorClass = 'border-green-500 border-2'; // Answer-Question
+  } else if (parentCount > 1) {
+    typeColorClass = 'border-orange-500 border-2'; // Combined (implied by multiple parents logic usually, or just waiting)
+  } else {
+      // Default / Empty state
+      typeColorClass = 'border-black/10 border';
+  }
+  
+  // Selection style overrides type border
   const selectionStyle = isSelected 
     ? 'ring-4 ring-indigo-500 ring-offset-2 z-20' 
-    : 'border border-black/10 hover:opacity-90 z-10';
+    : `${typeColorClass} hover:scale-105 hover:shadow-lg z-10`;
 
   // Content Truncation
+  // Prioritize showing Question, then Answer? 
+  // User didn't specify what to show text-wise, just color coding. 
+  // Let's keep existing logic but maybe prioritize Question?
   const displayContent = block.question || block.content || '';
   const hasContent = displayContent.length > 0;
   
@@ -38,13 +65,13 @@ const Block = ({ block, onClick, isSelected }) => {
         e.stopPropagation();
         onClick(block);
       }}
-      className={`absolute flex items-center justify-center shadow-sm cursor-pointer transition-all ${bgColor} ${selectionStyle}`}
+      className={`absolute flex items-center justify-center shadow-sm cursor-pointer transition-all duration-200 ease-in-out block-enter ${bgColor} ${selectionStyle}`}
       style={{
         width: BLOCK_SIZE,
         height: BLOCK_SIZE,
         left: x,
         top: y,
-        transform: 'translate(-50%, -50%) rotate(45deg)',
+        transform: 'translate(-50%, -50%) rotate(45deg)', // Default for when animation finishes or if overwritten
       }}
     >
       {/* Counter-rotated content container */}
@@ -52,22 +79,18 @@ const Block = ({ block, onClick, isSelected }) => {
         style={{ transform: 'rotate(-45deg)' }} 
         className="flex flex-col items-center justify-center w-full h-full p-1 relative"
       >
-        {/* Type Indicator (Top Right Corner) */}
-        <div 
+        {/* Type Indicator Dot (Optional additional cue) */}
+         <div 
             className={`absolute top-0 right-0 w-2 h-2 rounded-full m-1 ${
-                block.type === 'question' ? 'bg-blue-500' : 'bg-green-500'
+               hasQuestion && !hasAnswer ? 'bg-blue-500' : 
+               hasQuestion && hasAnswer ? 'bg-green-500' :
+               parentCount > 1 ? 'bg-orange-500' : 'bg-transparent'
             }`}
-            title={`Type: ${block.type}`}
         />
 
         {/* AI Indicator */}
         {block.isAiGenerated && (
             <Bot size={12} className={`absolute top-0 left-0 m-1 ${textColor}`} />
-        )}
-
-        {/* Completion Status */}
-        {block.status === 'completed' && (
-            <CheckCircle size={12} className="absolute bottom-0 right-0 m-1 text-green-600" />
         )}
 
         {/* Coordinate Label OR Content */}

@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Text, Flex, IconButton, Tooltip } from '@radix-ui/themes';
-import { ZoomIn, ZoomOut, Maximize } from 'lucide-react';
+import { Box, Text, Flex, IconButton, Tooltip, Callout } from '@radix-ui/themes';
+import { ZoomIn, ZoomOut, Maximize, AlertTriangle } from 'lucide-react';
 import { subscribeToPyramid, updatePyramidBlocks } from '../../services/pyramidService';
 import { calculateCoordinates, BLOCK_SIZE } from '../../utils/pyramidLayout';
 import Block from './Block';
 import BlockModal from './BlockModal';
 
-const PyramidBoard = ({ pyramidId }) => {
+const PyramidBoard = ({ pyramidId, onPyramidLoaded }) => {
   const [pyramid, setPyramid] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedBlock, setSelectedBlock] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -32,6 +33,7 @@ const PyramidBoard = ({ pyramidId }) => {
                     stroke="#94a3b8" 
                     strokeWidth="2"
                     strokeOpacity="0.5"
+                    className="connection-line"
                 />
             );
         }
@@ -47,6 +49,7 @@ const PyramidBoard = ({ pyramidId }) => {
                     stroke="#94a3b8" 
                     strokeWidth="2"
                     strokeOpacity="0.5"
+                    className="connection-line"
                 />
             );
         }
@@ -61,6 +64,7 @@ const PyramidBoard = ({ pyramidId }) => {
     const unsubscribe = subscribeToPyramid(pyramidId, (data) => {
         if (data) {
             setPyramid(data);
+            if (onPyramidLoaded) onPyramidLoaded(data);
         } else {
             console.error("Pyramid not found");
         }
@@ -68,7 +72,7 @@ const PyramidBoard = ({ pyramidId }) => {
     });
 
     return () => unsubscribe();
-  }, [pyramidId]);
+  }, [pyramidId, onPyramidLoaded]);
 
   const handleBlockClick = (block) => {
     setSelectedBlock(block);
@@ -78,16 +82,24 @@ const PyramidBoard = ({ pyramidId }) => {
   const handleSaveBlock = async (updatedBlock) => {
     const newBlocks = { ...pyramid.blocks, [updatedBlock.id]: updatedBlock };
     setPyramid(prev => ({ ...prev, blocks: newBlocks }));
+    setError(null);
     
     try {
         await updatePyramidBlocks(pyramidId, newBlocks);
-    } catch (error) {
-        console.error("Failed to save block:", error);
-        // Optionally revert state here
+    } catch (err) {
+        console.error("Failed to save block:", err);
+        setError("Failed to save changes. Please check your connection and try again.");
+        // Revert state if needed, but for now we just show error
     }
   };
 
-  if (loading) return <Text>Loading board...</Text>;
+  if (loading) return (
+    <Box className="w-full h-[85vh] min-h-[600px] flex items-center justify-center bg-slate-100 border border-slate-300 rounded-xl">
+       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+       <Text className="ml-3 text-slate-500">Loading Pyramid...</Text>
+    </Box>
+  );
+
   if (!pyramid) return <Text>Pyramid not found or deleted.</Text>;
 
   // Get parents for the modal
@@ -95,6 +107,23 @@ const PyramidBoard = ({ pyramidId }) => {
 
   return (
     <Box className="relative w-full h-[85vh] min-h-[600px] bg-slate-100 border border-slate-300 rounded-xl shadow-inner overflow-hidden">
+      {/* Error Toast/Callout */}
+      {error && (
+        <Box className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4">
+            <Callout.Root color="red" role="alert">
+                <Callout.Icon>
+                    <AlertTriangle />
+                </Callout.Icon>
+                <Callout.Text>
+                    {error}
+                </Callout.Text>
+                <IconButton variant="ghost" color="gray" size="1" onClick={() => setError(null)} className="ml-auto">
+                    <Text size="5">×</Text>
+                </IconButton>
+            </Callout.Root>
+        </Box>
+      )}
+
       {/* Zoom Controls */}
       <Box className="absolute bottom-4 right-4 z-50 flex gap-2 bg-white p-2 rounded-lg shadow-md">
         <Tooltip content="Zoom Out">

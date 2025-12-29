@@ -1,20 +1,36 @@
 import { Flex, Text, Button, Avatar, DropdownMenu } from '@radix-ui/themes';
 import { useAuth } from '../../contexts/AuthContext';
-import { LogOut } from 'lucide-react';
+import { LogOut, Download } from 'lucide-react';
 import APIKeyModal from './APIKeyModal';
 import ContextModal from './ContextModal';
+import { exportToExcel } from '../../services/exportService';
+import { useLocation } from 'react-router-dom';
 
-const Navbar = () => {
+const Navbar = ({ currentPyramid }) => {
   const { user, logout } = useAuth();
+  const location = useLocation();
+  const isBoardView = location.pathname.startsWith('/pyramid/');
+
+  const handleExport = () => {
+    if (currentPyramid) {
+      exportToExcel(currentPyramid);
+    }
+  };
 
   return (
     <div className="border-b border-gray-200 px-4 py-3 bg-white">
       <Flex justify="between" align="center">
         <Text size="5" weight="bold" className="text-black">
-          Pyramid Solver
+          PS
         </Text>
 
         <Flex gap="3" align="center">
+          {isBoardView && currentPyramid && (
+             <Button variant="soft" color="gray" onClick={handleExport}>
+                <Download size={16} className="mr-1" /> Export
+             </Button>
+          )}
+
           <APIKeyModal />
           
           <ContextModal />

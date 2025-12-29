@@ -95,6 +95,94 @@ Return ONLY the 3 questions, numbered 1, 2, 3.
 };
 
 /**
+ * Send a chat message to Claude AI with pyramid context
+ * 
+ * @param {string} apiKey - The user's Anthropic API Key
+ * @param {Object} pyramid - The full pyramid object
+ * @param {Array} chatHistory - Previous chat messages
+ * @param {string} userMessage - The user's new message
+ * @returns {Promise<string>} - The AI's response
+ */
+export const sendChatMessage = async (apiKey, pyramid, chatHistory, userMessage) => {
+  if (!apiKey) throw new Error("API Key is missing");
+
+  const anthropic = new Anthropic({
+    apiKey: apiKey,
+    dangerouslyAllowBrowser: true
+  });
+
+  // Format blocks data
+  const formattedBlocks = Object.values(pyramid.blocks || {})
+    .map(b => {
+      const [u, v] = b.id.split('-').map(Number);
+      const rank = u + 1;
+      const file = String.fromCharCode(65 + v);
+      return `Block ${rank}-${file} (${b.type || 'unknown'}):
+Question: ${b.question || b.content || 'N/A'}
+Answer: ${b.answer || 'N/A'}
+Parent IDs: ${b.parentIds ? b.parentIds.join(', ') : 'None'}`;
+    })
+    .join('\n\n');
+
+  // Format connections (simplified as parents are listed in blocks, but we can be explicit if needed)
+  // The block list above already covers relationships via Parent IDs.
+
+  // System Prompt
+  const systemPrompt = `
+You are an AI assistant helping a user with their Pyramid Problem Solver.
+
+PYRAMID CONTEXT:
+${pyramid.context || "No context provided."}
+
+PYRAMID STRUCTURE:
+- Title: ${pyramid.title}
+- Total blocks: ${Object.keys(pyramid.blocks || {}).length}
+- Main question (Block 1-H/0-0): ${pyramid.blocks?.['0-0']?.question || pyramid.blocks?.['0-0']?.content || "N/A"}
+
+CURRENT BLOCKS DATA:
+${formattedBlocks}
+
+Your role is to:
+1. Help the user analyze their problem-solving process
+2. Suggest new questions to explore
+3. Identify patterns or gaps in their reasoning
+4. Provide insights based on their answers
+5. Guide them toward the final answer
+
+Be concise, insightful, and reference specific blocks (e.g., "Block 2-A") when relevant.
+Always consider the pyramid context and structure in your responses.
+Markdown is supported in your response.
+`;
+
+  // Convert chat history to Anthropic format
+  // Limit to last 20 messages roughly
+  const recentHistory = chatHistory.slice(-20).map(msg => ({
+    role: msg.role === 'user' ? 'user' : 'assistant',
+    content: msg.content
+  }));
+
+  // Add current user message
+  const messages = [
+    ...recentHistory,
+    { role: "user", content: userMessage }
+  ];
+
+  try {
+    const msg = await anthropic.messages.create({
+      model: "claude-3-haiku-20240307",
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages: messages,
+    });
+
+    return msg.content[0].text;
+  } catch (error) {
+    console.error("AI Chat Error:", error);
+    throw error;
+  }
+};
+
+/**
  * Generate answer suggestions using Claude AI
  * 
  * @param {string} apiKey - The user's Anthropic API Key
