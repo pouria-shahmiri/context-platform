@@ -35,17 +35,17 @@ const PyramidCard = ({ pyramid, onDelete, onDuplicate }) => {
   };
 
   return (
-    <Card className="cursor-pointer relative group h-full flex flex-col backdrop-blur-md bg-white/70 border border-white/50 shadow-sm hover:shadow-lg transition-all duration-300 rounded-2xl ring-1 ring-black/5" onClick={handleOpen}>
+    <Card className="cursor-pointer relative group h-full flex flex-col backdrop-blur-md bg-surface border border-border shadow-sm hover:shadow-lg transition-all duration-300 rounded-2xl" onClick={handleOpen}>
       <Flex direction="column" gap="3" className="h-full">
         <Flex justify="between" align="start">
           <Box className="flex-1 min-w-0 pr-2">
-            <Text size="5" weight="bold" className="block mb-1 truncate tracking-tight text-gray-900" title={pyramid.title}>
+            <Text size="5" weight="bold" className="block mb-1 truncate tracking-tight text-foreground" title={pyramid.title}>
               {pyramid.title}
             </Text>
             <Flex align="center" gap="2">
               <Flex align="center" gap="1">
-                <Clock size={12} className="text-gray-400" />
-                <Text size="1" color="gray" className="text-gray-500 font-medium">
+                <Clock size={12} className="text-foreground-muted" />
+                <Text size="1" color="gray" className="text-foreground-muted font-medium">
                   {formatDate(pyramid.createdAt)}
                 </Text>
               </Flex>

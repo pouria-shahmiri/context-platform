@@ -25,7 +25,7 @@ const ChatMessage = ({ message, onCopy, onRegenerate, isLastAiMessage }) => {
                 size="1" 
              />
           ) : (
-             <Box className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-white">
+             <Box className="w-6 h-6 rounded-full bg-surface-active flex items-center justify-center text-foreground">
                 <Bot size={14} />
              </Box>
           )}
@@ -36,8 +36,8 @@ const ChatMessage = ({ message, onCopy, onRegenerate, isLastAiMessage }) => {
           className={`
             p-3 rounded-lg text-sm relative group
             ${isUser 
-              ? 'bg-blue-600 text-white rounded-tr-none' 
-              : 'bg-gray-100 text-gray-800 rounded-tl-none border border-gray-200'}
+              ? 'bg-foreground text-background rounded-tr-none' 
+              : 'bg-surface-hover text-foreground rounded-tl-none border border-border'}
           `}
         >
           {isUser ? (

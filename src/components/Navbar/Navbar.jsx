@@ -1,6 +1,7 @@
-import { Flex, Text, Button, Avatar, DropdownMenu } from '@radix-ui/themes';
+import { Flex, Text, Button, Avatar, DropdownMenu, IconButton, Tooltip } from '@radix-ui/themes';
 import { useAuth } from '../../contexts/AuthContext';
-import { LogOut, Download } from 'lucide-react';
+import { useTheme } from '../../contexts/ThemeContext';
+import { LogOut, Download, Sun, Moon } from 'lucide-react';
 import APIKeyModal from './APIKeyModal';
 import ContextModal from './ContextModal';
 import { exportToExcel } from '../../services/exportService';
@@ -8,6 +9,7 @@ import { useLocation } from 'react-router-dom';
 
 const Navbar = ({ currentPyramid }) => {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const isBoardView = location.pathname.startsWith('/pyramid/');
 
@@ -18,9 +20,9 @@ const Navbar = ({ currentPyramid }) => {
   };
 
   return (
-    <div className="border-b border-gray-200 px-4 py-3 bg-white">
+    <div className="border-b border-border px-4 py-3 bg-background transition-colors duration-300">
       <Flex justify="between" align="center">
-        <Text size="5" weight="bold" className="text-black">
+        <Text size="5" weight="bold" className="text-foreground">
           PS
         </Text>
 
@@ -30,6 +32,12 @@ const Navbar = ({ currentPyramid }) => {
                 <Download size={16} className="mr-1" /> Export
              </Button>
           )}
+
+          <Tooltip content={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
+            <IconButton variant="ghost" color="gray" onClick={toggleTheme} className="text-foreground hover:bg-surface">
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </IconButton>
+          </Tooltip>
 
           <APIKeyModal />
           

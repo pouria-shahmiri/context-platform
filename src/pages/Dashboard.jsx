@@ -71,12 +71,12 @@ const Dashboard = () => {
     });
 
   return (
-    <Box className="min-h-screen bg-white">
+    <Box className="min-h-screen bg-background">
       <Navbar />
       <Container size="4" className="p-4">
         {/* Header Section */}
         <Flex justify="between" align="center" className="mb-8 mt-6">
-          <Heading size="6" className="text-gray-800">My Pyramids</Heading>
+          <Heading size="6" className="text-foreground">My Pyramids</Heading>
           <CreatePyramidModal />
         </Flex>
 

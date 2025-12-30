@@ -7,17 +7,18 @@ const Block = ({ block, onClick, isSelected }) => {
   const { x, y } = calculateCoordinates(block.u, block.v);
   const isWhite = (block.u + block.v) % 2 === 0;
   
-  // Base Colors (Chess board style)
+  // Base Colors (Classic Wood Chess Board)
   const bgColor = isWhite ? 'bg-[#f0d9b5]' : 'bg-[#b58863]';
   const textColor = isWhite ? 'text-[#b58863]' : 'text-[#f0d9b5]';
 
   // Determine border color based on type
-  // Question only: Blue border
-  // Answer-Question (Combined/Complete): Green border
-  // Partial/Combined logic can be refined:
-  // If we want to strictly follow user request "Color-code block types: Question only: Blue, Answer-Question: Green, Combined: Orange"
-  // But we are also maintaining the chess board look.
-  // Strategy: Use a colored border or glow to indicate type, preserving the chess background.
+  // Question only: Blue border -> White/Gray dashed? Or keep colors for semantic meaning?
+  // User asked for B&W theme. I will keep colors but maybe muted? 
+  // Actually, standard "dark mode" often keeps semantic colors (red for error, green for success).
+  // But "black and white theme" usually implies monochrome.
+  // I'll keep the semantic borders but maybe adjust if they clash. 
+  // The user prompt was "create black and white theme", so maybe they want it strictly B&W.
+  // But losing semantic meaning is bad. I'll keep them for now as they are small indicators.
   
   let typeColorClass = '';
   const hasQuestion = block.question && block.question.trim().length > 0;
@@ -25,19 +26,19 @@ const Block = ({ block, onClick, isSelected }) => {
   const parentCount = block.parentIds ? block.parentIds.length : 0;
 
   if (hasQuestion && !hasAnswer) {
-    typeColorClass = 'border-blue-500 border-2'; // Question only
+    typeColorClass = 'border-blue-400 border-2'; // Question only
   } else if (hasQuestion && hasAnswer) {
-    typeColorClass = 'border-green-500 border-2'; // Answer-Question
+    typeColorClass = 'border-green-400 border-2'; // Answer-Question
   } else if (parentCount > 1) {
-    typeColorClass = 'border-orange-500 border-2'; // Combined (implied by multiple parents logic usually, or just waiting)
+    typeColorClass = 'border-orange-400 border-2'; // Combined
   } else {
       // Default / Empty state
-      typeColorClass = 'border-black/10 border';
+      typeColorClass = 'border-black/20 border';
   }
   
   // Selection style overrides type border
   const selectionStyle = isSelected 
-    ? 'ring-4 ring-indigo-500 ring-offset-2 z-20' 
+    ? 'ring-4 ring-white ring-offset-2 ring-offset-black z-20' 
     : `${typeColorClass} hover:scale-105 hover:shadow-lg z-10`;
 
   // Content Truncation

@@ -203,13 +203,16 @@ Answer: ${h.answer || "N/A"}
   const renderSuggestions = (target) => {
     if (suggestionTarget !== target || suggestions.length === 0) return null;
     return (
-        <Flex gap="2" direction="column" className="mb-2 mt-2 bg-purple-50 p-2 rounded border border-purple-100">
+        <Flex gap="2" direction="column" className="mb-2 mt-2 p-2 rounded border" style={{ backgroundColor: 'var(--purple-2)', borderColor: 'var(--purple-6)' }}>
             <Text size="1" color="purple" weight="bold">AI Suggestions:</Text>
             {suggestions.map((s, i) => (
                 <Box 
                     key={i} 
                     onClick={() => applySuggestion(s)}
-                    className="cursor-pointer hover:bg-purple-100 p-1 rounded text-xs text-purple-800 transition-colors"
+                    className="cursor-pointer p-1 rounded text-xs transition-colors"
+                    style={{ color: 'var(--purple-11)' }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--purple-4)'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                 >
                     • {s}
                 </Box>
@@ -238,13 +241,13 @@ Answer: ${h.answer || "N/A"}
         <Flex direction="column" gap="4">
           {/* Parent Context Section */}
           {parents && parents.length > 0 && (
-            <Box className="bg-gray-50 p-3 rounded-md border border-gray-200">
-              <Text size="2" weight="bold" color="gray" className="uppercase text-xs mb-2 block">
+            <Box className="bg-surface p-3 rounded-md border border-border">
+              <Text size="2" weight="bold" className="uppercase text-xs mb-2 block text-foreground-muted">
                 Previous Level Context (Parents)
               </Text>
               <Flex direction="column" gap="2">
                 {parents.map(parent => (
-                  <Box key={parent.id} className="text-sm">
+                  <Box key={parent.id} className="text-sm text-foreground">
                     <Badge color="indigo" variant="soft" className="mr-2">
                       {formatBlockLabel(parent.id)}
                     </Badge>

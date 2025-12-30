@@ -5,7 +5,7 @@ import PyramidCard from './PyramidCard';
 const PyramidList = ({ pyramids, onDelete, onDuplicate }) => {
   if (!pyramids || pyramids.length === 0) {
     return (
-      <Flex direction="column" align="center" justify="center" className="py-20 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+      <Flex direction="column" align="center" justify="center" className="py-20 text-muted bg-surface rounded-lg border border-dashed border-border">
         <Text size="4" weight="bold" className="mb-2">No pyramids found</Text>
         <Text size="2">Create your first pyramid to get started!</Text>
       </Flex>

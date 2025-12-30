@@ -94,9 +94,9 @@ const PyramidBoard = ({ pyramidId, onPyramidLoaded }) => {
   };
 
   if (loading) return (
-    <Box className="w-full h-[85vh] min-h-[600px] flex items-center justify-center bg-slate-100 border border-slate-300 rounded-xl">
-       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-       <Text className="ml-3 text-slate-500">Loading Pyramid...</Text>
+    <Box className="w-full h-[85vh] min-h-[600px] flex items-center justify-center bg-surface border border-border rounded-xl">
+       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground"></div>
+       <Text className="ml-3 text-foreground-muted">Loading Pyramid...</Text>
     </Box>
   );
 
@@ -106,7 +106,7 @@ const PyramidBoard = ({ pyramidId, onPyramidLoaded }) => {
   const parentBlocks = selectedBlock?.parentIds?.map(id => pyramid.blocks[id]).filter(Boolean) || [];
 
   return (
-    <Box className="relative w-full h-[85vh] min-h-[600px] bg-slate-100 border border-slate-300 rounded-xl shadow-inner overflow-hidden">
+    <Box className="relative w-full h-[85vh] min-h-[600px] bg-surface border border-border rounded-xl shadow-inner overflow-hidden">
       {/* Error Toast/Callout */}
       {error && (
         <Box className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4">
@@ -125,13 +125,13 @@ const PyramidBoard = ({ pyramidId, onPyramidLoaded }) => {
       )}
 
       {/* Zoom Controls */}
-      <Box className="absolute bottom-4 right-4 z-50 flex gap-2 bg-white p-2 rounded-lg shadow-md">
+      <Box className="absolute bottom-4 right-4 z-50 flex gap-2 bg-background p-2 rounded-lg shadow-md border border-border">
         <Tooltip content="Zoom Out">
             <IconButton variant="soft" color="gray" onClick={() => setZoom(z => Math.max(0.5, z - 0.1))}>
                 <ZoomOut size={18} />
             </IconButton>
         </Tooltip>
-        <Text className="flex items-center text-xs font-mono w-12 justify-center">
+        <Text className="flex items-center text-xs font-mono w-12 justify-center text-foreground">
             {Math.round(zoom * 100)}%
         </Text>
         <Tooltip content="Zoom In">
@@ -169,7 +169,7 @@ const PyramidBoard = ({ pyramidId, onPyramidLoaded }) => {
                 return (
                     <div 
                         key={`label-u-${u}`}
-                        className="absolute text-slate-700 font-bold text-xl flex items-center justify-center z-0"
+                        className="absolute text-foreground-muted font-bold text-xl flex items-center justify-center z-0"
                         style={{
                             left: x,
                             top: y,
@@ -188,7 +188,7 @@ const PyramidBoard = ({ pyramidId, onPyramidLoaded }) => {
                 return (
                     <div 
                         key={`label-v-${v}`}
-                        className="absolute text-slate-700 font-bold text-xl flex items-center justify-center z-0"
+                        className="absolute text-foreground-muted font-bold text-xl flex items-center justify-center z-0"
                         style={{
                             left: x,
                             top: y,

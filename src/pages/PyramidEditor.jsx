@@ -12,10 +12,10 @@ const PyramidEditor = () => {
   const [currentPyramid, setCurrentPyramid] = useState(null);
 
   return (
-    <Box className="min-h-screen bg-gray-50">
+    <Box className="min-h-screen bg-background">
       <Navbar currentPyramid={currentPyramid} />
       <Container size="4" className="p-4 pb-2">
-        <Button variant="ghost" color="gray" onClick={() => navigate('/dashboard')} className="mb-4 hover:bg-gray-200">
+        <Button variant="ghost" color="gray" onClick={() => navigate('/dashboard')} className="mb-4 hover:bg-surface text-foreground">
           <ArrowLeft size={16} className="mr-2" /> Back to Dashboard
         </Button>
         

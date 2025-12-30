@@ -8,15 +8,19 @@
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  --bg-athens-gray: #F5F5F7;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: var(--bg-athens-gray);
-  color: #1d1d1f; /* Apple-like text color */
+  /* Rely on Radix Theme wrapper for background/color usually, 
+     but setting defaults here ensures body matches if Theme doesn't cover everything. 
+     Note: These variables need to be defined. Since Radix defines them under .radix-themes,
+     we might need to ensure body has that class or we manually map them if we want body-level styling.
+     However, for now, we will trust the App wrapper. */
+  background-color: var(--gray-1);
+  color: var(--gray-12);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
