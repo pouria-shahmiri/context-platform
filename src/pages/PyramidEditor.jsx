@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Container, Heading, Text, Button, Flex, Badge } from '@radix-ui/themes';
+import { Box, Container, Heading, Text, Button, Flex, Badge, DropdownMenu } from '@radix-ui/themes';
 import PyramidBoard from '../components/Board/PyramidBoard';
-import { ArrowLeft, Link as LinkIcon, Download } from 'lucide-react';
-import { getPyramid } from '../services/pyramidService';
-import { exportToExcel } from '../services/exportService';
+import { ArrowLeft, Link as LinkIcon, Download, ChevronDown } from 'lucide-react';
+import { getPyramid, updatePyramidContextSources } from '../services/pyramidService';
+import { getContextDocument } from '../services/contextDocumentService';
+import { getProductDefinition } from '../services/productDefinitionService';
+import { exportPyramidToExcel, exportPyramidToMarkdown } from '../services/exportService';
 
 const PyramidEditor = () => {
   const { pyramidId } = useParams();
@@ -74,9 +76,21 @@ const PyramidEditor = () => {
             <Heading size="6">Pyramid Editor</Heading>
             <Text color="gray" size="2">ID: {pyramidId}</Text>
           </Box>
-          <Button onClick={() => exportToExcel(currentPyramid)} disabled={!currentPyramid} className="cursor-pointer">
-            <Download size={16} className="mr-2" /> Export to Excel
-          </Button>
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger>
+              <Button disabled={!currentPyramid} className="cursor-pointer">
+                <Download size={16} className="mr-2" /> Export <ChevronDown size={14} className="ml-1" />
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              <DropdownMenu.Item onClick={() => exportPyramidToExcel(currentPyramid)}>
+                Excel (.xlsx)
+              </DropdownMenu.Item>
+              <DropdownMenu.Item onClick={() => exportPyramidToMarkdown(currentPyramid)}>
+                Markdown (.md)
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
         </Flex>
       </Container>
       

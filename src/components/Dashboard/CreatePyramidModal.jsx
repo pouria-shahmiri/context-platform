@@ -42,9 +42,9 @@ const CreatePyramidModal = () => {
         </Button>
       </Dialog.Trigger>
 
-      <Dialog.Content style={{ maxWidth: 450 }}>
-        <Dialog.Title>Create New Pyramid</Dialog.Title>
-        <Dialog.Description size="2" mb="4">
+      <Dialog.Content aria-describedby="pyramid-desc" aria-labelledby="pyramid-title" style={{ maxWidth: 450 }}>
+        <Dialog.Title id="pyramid-title">Create New Pyramid</Dialog.Title>
+        <Dialog.Description id="pyramid-desc" size="2" mb="4">
           Start a new problem-solving session.
         </Dialog.Description>
 

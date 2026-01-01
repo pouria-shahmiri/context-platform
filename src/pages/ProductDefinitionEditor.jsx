@@ -9,19 +9,20 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import dagre from 'dagre';
-import { Box, Flex, Heading, Text, Badge, IconButton, Button } from '@radix-ui/themes';
-import { ArrowLeft, Layers, CheckCircle } from 'lucide-react';
+import { Box, Flex, Heading, Text, Badge, IconButton, Button, DropdownMenu } from '@radix-ui/themes';
+import { ArrowLeft, Layers, CheckCircle, Download, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getProductDefinition, updateNodeDescription } from '../services/productDefinitionService';
 import { getPyramid } from '../services/pyramidService';
 import { getContextDocument } from '../services/contextDocumentService';
+import { exportProductDefinitionToExcel, exportProductDefinitionToMarkdown } from '../services/exportService';
 import TopicEditModal from '../components/ProductDefinition/TopicEditModal';
 import ContextSelectorModal from '../components/ProductDefinition/ContextSelectorModal';
 
 // Layout configuration
 const LEVEL_1_RADIUS = 300;
 
-// Define nodeTypes and edgeTypes outside the component to avoid unnecessary re-renders
+// Define nodeTypes and edgeTypes outside the component
 const nodeTypes = {};
 const edgeTypes = {};
 
@@ -274,7 +275,21 @@ const ProductDefinitionEditorContent = () => {
         </Flex>
 
         <Flex align="center" gap="4">
-          {/* Global Context is now in Navbar */}
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger>
+              <Button variant="surface" className="cursor-pointer">
+                <Download size={16} className="mr-2" /> Export <ChevronDown size={14} className="ml-1" />
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              <DropdownMenu.Item onClick={() => exportProductDefinitionToExcel(definition)}>
+                Excel (.xlsx)
+              </DropdownMenu.Item>
+              <DropdownMenu.Item onClick={() => exportProductDefinitionToMarkdown(definition)}>
+                Markdown (.md)
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
         </Flex>
       </Flex>
 

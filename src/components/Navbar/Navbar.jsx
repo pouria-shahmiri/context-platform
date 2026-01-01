@@ -24,7 +24,7 @@ const Navbar = () => {
   const location = useLocation();
 
   return (
-    <div className="sticky top-0 z-50 border-b border-gray-200 px-6 py-3 bg-white/80 backdrop-blur-md shadow-sm">
+    <div className="sticky top-0 z-50 px-6 py-3 bg-white/80 backdrop-blur-md shadow-md">
       <Flex justify="between" align="center">
         <Flex gap="4" align="center">
             <Link to="/dashboard" className="no-underline text-black cursor-pointer">

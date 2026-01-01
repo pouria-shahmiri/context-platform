@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Box, Flex, Text, Button, IconButton, TextField, TextArea } from '@radix-ui/themes';
-import { ArrowLeft, Save } from 'lucide-react';
+import { Container, Box, Flex, Text, Button, IconButton, TextField, TextArea, DropdownMenu } from '@radix-ui/themes';
+import { ArrowLeft, Save, Download, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getContextDocument, updateContextDocument } from '../services/contextDocumentService';
+import { exportContextToExcel, exportContextToMarkdown } from '../services/exportService';
 
 const ContextDocumentEditor = () => {
   const { documentId } = useParams();
@@ -75,9 +76,27 @@ const ContextDocumentEditor = () => {
           </Box>
         </Flex>
 
-        <Button onClick={handleSave} disabled={saving} color="green" variant="soft">
-          <Save size={16} /> {saving ? 'Saving...' : 'Save Changes'}
-        </Button>
+        <Flex gap="2">
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger>
+              <Button variant="soft" color="gray" className="cursor-pointer">
+                <Download size={16} /> Export <ChevronDown size={14} />
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              <DropdownMenu.Item onClick={() => exportContextToExcel({...document, title, content})}>
+                Excel (.xlsx)
+              </DropdownMenu.Item>
+              <DropdownMenu.Item onClick={() => exportContextToMarkdown({...document, title, content})}>
+                Markdown (.md)
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
+
+          <Button onClick={handleSave} disabled={saving} color="green" variant="soft">
+            <Save size={16} /> {saving ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </Flex>
       </Flex>
 
       <Container size="3" className="flex-grow p-8 overflow-y-auto">

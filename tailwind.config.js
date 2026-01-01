@@ -26,7 +26,7 @@ export default {
         '3xl': '1.5rem', // Extra rounded for cards
       },
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+        sans: ['"Ubuntu"', 'Inter'],
       }
     },
   },

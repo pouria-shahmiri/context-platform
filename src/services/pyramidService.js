@@ -15,7 +15,7 @@ import { db } from './firebase';
 import { createBlock } from '../utils/pyramidLayout';
 
 // Create a new pyramid
-export const createPyramid = async (userId, title, context) => {
+export const createPyramid = async (userId, title, context = null) => {
   try {
     // Create an 8x8 grid of blocks
     const blocks = {};
