@@ -8,7 +8,6 @@ import { useNavigate } from 'react-router-dom';
 const CreatePyramidModal = () => {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
-  const [context, setContext] = useState('');
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -18,11 +17,10 @@ const CreatePyramidModal = () => {
     
     setLoading(true);
     try {
-      const pyramidId = await createPyramid(user.uid, title, context);
+      const pyramidId = await createPyramid(user.uid, title);
       setOpen(false);
       // Reset state
       setTitle('');
-      setContext('');
       
       // Small delay to allow modal to close visually before navigating
       setTimeout(() => {
@@ -59,18 +57,6 @@ const CreatePyramidModal = () => {
               placeholder="e.g., Q3 Sales Strategy"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-            />
-          </label>
-          <label>
-            <Text as="div" size="2" mb="1" weight="bold">
-              Context (Optional)
-            </Text>
-            <TextArea
-              placeholder="Background information for the AI..."
-              value={context}
-              onChange={(e) => setContext(e.target.value)}
-              rows={4}
-              style={{ resize: 'vertical' }}
             />
           </label>
         </Flex>

@@ -95,15 +95,58 @@ Return ONLY the 3 questions, numbered 1, 2, 3.
 };
 
 /**
+ * Generate a suggestion for a Product Definition topic answer
+ */
+export const generateProductDefinitionSuggestion = async (apiKey, node, productTitle, contextData) => {
+  if (!apiKey) throw new Error("API Key is missing");
+
+  const anthropic = new Anthropic({
+    apiKey: apiKey,
+    dangerouslyAllowBrowser: true
+  });
+
+  const prompt = `
+You are an expert product manager assistant helping to define a product using a structured methodology.
+
+PRODUCT TITLE: "${productTitle}"
+
+CURRENT TOPIC: "${node.label}"
+QUESTION TO ANSWER: "${node.question || "Describe this aspect of the product"}"
+
+CONTEXT INFORMATION:
+${contextData}
+
+TASK:
+Based on the provided context and the product title, suggest a draft answer for the current topic.
+The answer should be concise, practical, and directly address the question.
+If the context doesn't provide enough information, make reasonable assumptions based on standard product management practices, but note them as assumptions.
+  `;
+
+  try {
+    const msg = await anthropic.messages.create({
+      model: "claude-3-haiku-20240307",
+      max_tokens: 1024,
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    return msg.content[0].text;
+  } catch (error) {
+    console.error("AI Suggestion Error:", error);
+    throw error;
+  }
+};
+
+/**
  * Send a chat message to Claude AI with pyramid context
  * 
  * @param {string} apiKey - The user's Anthropic API Key
  * @param {Object} pyramid - The full pyramid object
  * @param {Array} chatHistory - Previous chat messages
  * @param {string} userMessage - The user's new message
+ * @param {string} additionalContext - Aggregated context from sources
  * @returns {Promise<string>} - The AI's response
  */
-export const sendChatMessage = async (apiKey, pyramid, chatHistory, userMessage) => {
+export const sendChatMessage = async (apiKey, pyramid, chatHistory, userMessage, additionalContext = null) => {
   if (!apiKey) throw new Error("API Key is missing");
 
   const anthropic = new Anthropic({
@@ -124,15 +167,15 @@ Parent IDs: ${b.parentIds ? b.parentIds.join(', ') : 'None'}`;
     })
     .join('\n\n');
 
-  // Format connections (simplified as parents are listed in blocks, but we can be explicit if needed)
-  // The block list above already covers relationships via Parent IDs.
+  // Use additionalContext if provided, otherwise fallback to legacy pyramid.context
+  const contextToUse = additionalContext || pyramid.context || "No context provided.";
 
   // System Prompt
   const systemPrompt = `
 You are an AI assistant helping a user with their Pyramid Problem Solver.
 
 PYRAMID CONTEXT:
-${pyramid.context || "No context provided."}
+${contextToUse}
 
 PYRAMID STRUCTURE:
 - Title: ${pyramid.title}
@@ -178,6 +221,53 @@ Markdown is supported in your response.
     return msg.content[0].text;
   } catch (error) {
     console.error("AI Chat Error:", error);
+    throw error;
+  }
+};
+
+/**
+ * Send a chat message to Claude AI with product definition context
+ */
+export const sendProductDefinitionChatMessage = async (apiKey, productDefinition, additionalContext, history, userMessage) => {
+  if (!apiKey) throw new Error("API Key is missing");
+
+  const anthropic = new Anthropic({
+    apiKey: apiKey,
+    dangerouslyAllowBrowser: true
+  });
+
+  // Format history
+  const historyText = history.slice(-10).map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
+
+  const prompt = `
+You are an expert product manager assistant.
+You are helping the user define a product using a structured methodology.
+
+CURRENT PRODUCT DEFINITION:
+Title: ${productDefinition.title}
+Current State: ${JSON.stringify(productDefinition.data, null, 2)}
+
+ADDITIONAL CONTEXT (Linked Pyramids, Docs, etc.):
+${additionalContext || "No additional context linked."}
+
+CHAT HISTORY:
+${historyText}
+
+USER: ${userMessage}
+
+ASSISTANT:
+  `;
+
+  try {
+    const msg = await anthropic.messages.create({
+      model: "claude-3-haiku-20240307",
+      max_tokens: 1024,
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    return msg.content[0].text;
+  } catch (error) {
+    console.error("Chat Error:", error);
     throw error;
   }
 };

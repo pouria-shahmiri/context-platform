@@ -87,16 +87,16 @@ export const updatePyramidBlocks = async (pyramidId, blocks) => {
   }
 };
 
-// Update pyramid context
-export const updatePyramidContext = async (pyramidId, context) => {
+// Update pyramid context sources
+export const updatePyramidContextSources = async (pyramidId, contextSources) => {
   try {
     const docRef = doc(db, 'pyramids', pyramidId);
     await updateDoc(docRef, {
-      context,
+      contextSources,
       lastModified: serverTimestamp()
     });
   } catch (error) {
-    console.error("Error updating pyramid context: ", error);
+    console.error("Error updating pyramid context sources: ", error);
     throw error;
   }
 };

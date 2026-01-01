@@ -2,12 +2,20 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Box, Flex, Text, TextArea, Button, IconButton, ScrollArea, Tooltip, Dialog } from '@radix-ui/themes';
 import { Send, ChevronDown, ChevronUp, Trash2, MessageSquare, Bot, X, Maximize2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useGlobalContext } from '../../contexts/GlobalContext';
 import { sendMessage, subscribeToChat, clearChatHistory } from '../../services/chatService';
-import { sendChatMessage } from '../../services/anthropic';
+import { sendChatMessage, sendProductDefinitionChatMessage } from '../../services/anthropic';
 import ChatMessage from './ChatMessage';
 
-const ChatPanel = ({ pyramidId, pyramid }) => {
+const ChatPanel = ({ 
+  pyramidId, 
+  pyramid, 
+  parentCollection = 'pyramids',
+  productDefinition = null,
+  additionalContext = null
+}) => {
   const { user, apiKey } = useAuth();
+  const { aggregatedContext: globalContext } = useGlobalContext();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([]);
@@ -19,9 +27,9 @@ const ChatPanel = ({ pyramidId, pyramid }) => {
     if (!user || !pyramidId) return;
     const unsubscribe = subscribeToChat(user.uid, pyramidId, (msgs) => {
       setMessages(msgs);
-    });
+    }, parentCollection);
     return () => unsubscribe();
-  }, [user, pyramidId]);
+  }, [user, pyramidId, parentCollection]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -39,13 +47,29 @@ const ChatPanel = ({ pyramidId, pyramid }) => {
 
     try {
       // 1. Save user message
-      await sendMessage(user.uid, pyramidId, 'user', userMsg);
+      await sendMessage(user.uid, pyramidId, 'user', userMsg, {}, parentCollection);
 
       // 2. Get AI Response
-      const response = await sendChatMessage(apiKey, pyramid, messages, userMsg);
+      let response;
+      const combinedContext = (additionalContext || "") + "\n\n" + (globalContext || "");
+
+      if (parentCollection === 'productDefinitions' && productDefinition) {
+        // Use Product Definition Chat Mode
+        response = await sendProductDefinitionChatMessage(
+            apiKey, 
+            productDefinition, 
+            combinedContext, 
+            messages, 
+            userMsg
+        );
+      } else {
+        // Use Standard Pyramid Chat Mode
+        // Pass additionalContext (aggregated) if available
+        response = await sendChatMessage(apiKey, pyramid, messages, userMsg, combinedContext, parentCollection);
+      }
 
       // 3. Save AI message
-      await sendMessage(user.uid, pyramidId, 'assistant', response);
+      await sendMessage(user.uid, pyramidId, 'assistant', response, {}, parentCollection);
 
     } catch (error) {
       console.error("Chat Error:", error);
@@ -56,7 +80,7 @@ const ChatPanel = ({ pyramidId, pyramid }) => {
 
   const handleClear = async () => {
     if (window.confirm("Are you sure you want to clear the chat history?")) {
-        await clearChatHistory(user.uid, pyramidId);
+        await clearChatHistory(user.uid, pyramidId, parentCollection);
     }
   };
 
@@ -76,9 +100,9 @@ const ChatPanel = ({ pyramidId, pyramid }) => {
                 variant="solid" 
                 className="shadow-xl bg-indigo-600 hover:bg-indigo-700 text-white rounded-full h-14 w-14 p-0 flex items-center justify-center transition-transform hover:scale-105"
                 onClick={() => setIsOpen(true)}
-                style={{ borderRadius: '9999px' }}
+                style={{ borderRadius: '9999px', cursor: 'pointer' }}
             >
-                <MessageSquare size={24} />
+                <Bot size={28} />
             </Button>
             {messages.length > 0 && (
                 <Box className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white">

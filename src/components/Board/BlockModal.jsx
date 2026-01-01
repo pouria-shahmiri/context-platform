@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, Button, Flex, Text, TextArea, Box, Badge, Callout } from '@radix-ui/themes';
 import { Sparkles, Save, X, Merge, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useGlobalContext } from '../../contexts/GlobalContext';
 import { generateQuestions, generateAnswers } from '../../services/anthropic';
 
 const BlockModal = ({ isOpen, onClose, block, parents, onSave, pyramidContext, allBlocks }) => {
   const { apiKey } = useAuth();
+  const { aggregatedContext: globalContext } = useGlobalContext();
   const [answer, setAnswer] = useState('');
   const [question, setQuestion] = useState('');
   const [combinedQuestion, setCombinedQuestion] = useState('');
@@ -116,8 +118,10 @@ Answer: ${h.answer || "N/A"}
             : (parents?.[0]?.question || parents?.[0]?.content || "Start of the pyramid");
 
         const historyContext = buildHistoryContext();
+        // Combine local pyramid context with global context
+        const fullContext = (pyramidContext || "General Problem Solving") + "\n\n" + (globalContext || "");
 
-        const result = await generateQuestions(apiKey, pyramidContext || "General Problem Solving", 'regular', {
+        const result = await generateQuestions(apiKey, fullContext, 'regular', {
             parentQuestion: effectiveParentQuestion,
             currentAnswer: answer || "No answer provided yet",
             historyContext
@@ -144,7 +148,10 @@ Answer: ${h.answer || "N/A"}
     try {
         const parentQuestions = parents.map(p => p.question || p.content);
         const historyContext = buildHistoryContext();
-        const result = await generateQuestions(apiKey, pyramidContext || "General Problem Solving", 'combined', {
+        // Combine local pyramid context with global context
+        const fullContext = (pyramidContext || "General Problem Solving") + "\n\n" + (globalContext || "");
+        
+        const result = await generateQuestions(apiKey, fullContext, 'combined', {
             parentQuestions,
             historyContext
         });
@@ -178,7 +185,10 @@ Answer: ${h.answer || "N/A"}
         }
 
         const historyContext = buildHistoryContext();
-        const result = await generateAnswers(apiKey, pyramidContext || "General Problem Solving", promptQuestion, historyContext);
+        // Combine local pyramid context with global context
+        const fullContext = (pyramidContext || "General Problem Solving") + "\n\n" + (globalContext || "");
+
+        const result = await generateAnswers(apiKey, fullContext, promptQuestion, historyContext);
         setSuggestions(result);
     } catch (error) {
         console.error(error);

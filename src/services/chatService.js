@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, getDocs, writeBatch, where, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, getDocs, writeBatch } from 'firebase/firestore';
 
 const CHAT_COLLECTION = 'chat';
 
@@ -12,10 +12,10 @@ const CHAT_COLLECTION = 'chat';
  * @param {string} content - Message content
  * @param {Object} metadata - Optional metadata (e.g., tokens, model)
  */
-export const sendMessage = async (userId, pyramidId, role, content, metadata = {}) => {
-  if (!userId || !pyramidId) return;
+export const sendMessage = async (userId, parentId, role, content, metadata = {}, parentCollection = 'pyramids') => {
+  if (!userId || !parentId) return;
 
-  const chatRef = collection(db, `pyramids/${pyramidId}/${CHAT_COLLECTION}`);
+  const chatRef = collection(db, `${parentCollection}/${parentId}/${CHAT_COLLECTION}`);
   
   await addDoc(chatRef, {
     userId,
@@ -27,17 +27,18 @@ export const sendMessage = async (userId, pyramidId, role, content, metadata = {
 };
 
 /**
- * Subscribe to chat messages for a specific pyramid
+ * Subscribe to chat messages for a specific context
  * 
  * @param {string} userId 
- * @param {string} pyramidId 
+ * @param {string} parentId 
  * @param {Function} callback - Function to receive messages array
+ * @param {string} parentCollection - Parent collection name (default: 'pyramids')
  * @returns {Function} - Unsubscribe function
  */
-export const subscribeToChat = (userId, pyramidId, callback) => {
-  if (!userId || !pyramidId) return () => {};
+export const subscribeToChat = (userId, parentId, callback, parentCollection = 'pyramids') => {
+  if (!userId || !parentId) return () => {};
 
-  const chatRef = collection(db, `pyramids/${pyramidId}/${CHAT_COLLECTION}`);
+  const chatRef = collection(db, `${parentCollection}/${parentId}/${CHAT_COLLECTION}`);
   const q = query(chatRef, orderBy('timestamp', 'asc'), limit(50));
 
   return onSnapshot(q, (snapshot) => {
@@ -50,15 +51,16 @@ export const subscribeToChat = (userId, pyramidId, callback) => {
 };
 
 /**
- * Clear all chat history for a pyramid
+ * Clear all chat history for a context
  * 
  * @param {string} userId 
- * @param {string} pyramidId 
+ * @param {string} parentId 
+ * @param {string} parentCollection - Parent collection name (default: 'pyramids')
  */
-export const clearChatHistory = async (userId, pyramidId) => {
-  if (!userId || !pyramidId) return;
+export const clearChatHistory = async (userId, parentId, parentCollection = 'pyramids') => {
+  if (!userId || !parentId) return;
 
-  const chatRef = collection(db, `pyramids/${pyramidId}/${CHAT_COLLECTION}`);
+  const chatRef = collection(db, `${parentCollection}/${parentId}/${CHAT_COLLECTION}`);
   const snapshot = await getDocs(chatRef);
   
   const batch = writeBatch(db);
