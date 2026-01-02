@@ -7,15 +7,17 @@ import {
   ErrorCode,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
-import admin from "firebase-admin";
+import { createClient } from "@supabase/supabase-js";
 import fs from "fs/promises";
 import { appendFileSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 // --- DEBUG LOGGING ---
-// Since this runs over stdio, console.log breaks the protocol.
-// We log to a file for debugging.
 const LOG_FILE = path.resolve("/tmp/pyramid-mcp-debug.log");
 
 function log(message: string) {
@@ -29,37 +31,17 @@ function log(message: string) {
 
 log("Starting MCP Server...");
 log(`Current Working Directory: ${process.cwd()}`);
-log(`Environment Credentials: ${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
 
-// 1. Initialize Firebase Admin
-try {
-  if (!admin.apps.length) {
-    // Check if credential file exists if env var is set
-    if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-        try {
-            // Synchronously check to fail early
-            const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-            log(`Checking credential file at: ${credPath}`);
-            // We don't read it here, just letting admin SDK handle it, 
-            // but logging the attempt is helpful.
-        } catch (e) {
-            log(`Warning: Could not check credential file: ${e}`);
-        }
-    }
+// 1. Initialize Supabase
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY; // Prefer service key for server
 
-    admin.initializeApp({
-        projectId: "product-platform-c9bb9"
-    });
-    log("Firebase Admin Initialized successfully.");
-  }
-} catch (error: any) {
-  log(`CRITICAL ERROR: Failed to initialize Firebase Admin: ${error.message}`);
-  log(`Stack: ${error.stack}`);
-  // We exit because the server is useless without DB access
-  process.exit(1);
+if (!supabaseUrl || !supabaseKey) {
+    log("WARNING: Missing SUPABASE_URL or SUPABASE_SERVICE_KEY environment variables. DB operations will fail.");
 }
 
-const db = admin.firestore();
+const supabase = createClient(supabaseUrl || "", supabaseKey || "");
+log("Supabase Client Initialized.");
 
 // 2. Setup MCP Server
 const server = new Server(
@@ -80,8 +62,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
       {
-        name: "get_schema",
-        description: "Get the Firestore security rules to understand the database schema",
+        name: "get_schema_info",
+        description: "Get information about the Supabase database schema",
         inputSchema: { type: "object", properties: {} },
       },
       {
@@ -137,63 +119,77 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   log(`Received tool call: ${name} with args: ${JSON.stringify(args)}`);
 
   try {
-    if (name === "get_schema") {
-        const __dirname = path.dirname(fileURLToPath(import.meta.url));
-        const rulesPath = path.resolve(__dirname, "../../firestore.rules");
-        log(`Reading rules from: ${rulesPath}`);
-        const rules = await fs.readFile(rulesPath, "utf-8");
-        return { content: [{ type: "text", text: rules }] };
+    if (name === "get_schema_info") {
+        const schemaInfo = `
+Tables:
+- pyramids (id, user_id, title, context, status, blocks, connections, created_at, last_modified)
+- product_definitions (id, user_id, title, data, linked_pyramid_id, created_at, last_modified)
+- conversations (id, user_id, title, created_at, updated_at)
+- messages (id, user_id, role, content, metadata, parent_id, parent_collection, created_at)
+        `;
+        return { content: [{ type: "text", text: schemaInfo.trim() }] };
     }
 
     if (name === "list_pyramids") {
       const limit = Number(args?.limit) || 10;
-      let query = db.collection("pyramids").orderBy("lastModified", "desc").limit(limit);
+      let query = supabase
+        .from('pyramids')
+        .select('id, title, status, last_modified')
+        .order('last_modified', { ascending: false })
+        .limit(limit);
       
       if (args?.userId) {
-        query = query.where("userId", "==", args.userId);
+        query = query.eq('user_id', String(args.userId));
       }
 
-      const snapshot = await query.get();
-      log(`Found ${snapshot.size} pyramids`);
+      const { data, error } = await query;
       
-      const items = snapshot.docs.map(doc => ({
-        id: doc.id,
-        title: doc.data().title,
-        status: doc.data().status,
-        lastModified: doc.data().lastModified?.toDate()?.toISOString()
-      }));
+      if (error) throw new Error(error.message);
 
-      return { content: [{ type: "text", text: JSON.stringify(items, null, 2) }] };
+      log(`Found ${data?.length || 0} pyramids`);
+      
+      return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
     }
 
     if (name === "get_pyramid") {
       const id = String(args?.id);
-      const doc = await db.collection("pyramids").doc(id).get();
+      const { data, error } = await supabase
+        .from('pyramids')
+        .select('*')
+        .eq('id', id)
+        .single();
       
-      if (!doc.exists) throw new Error("Pyramid not found");
+      if (error) throw new Error(error.message);
+      if (!data) throw new Error("Pyramid not found");
       
-      return { content: [{ type: "text", text: JSON.stringify({ id: doc.id, ...doc.data() }, null, 2) }] };
+      return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
     }
 
     if (name === "list_product_definitions") {
       const limit = Number(args?.limit) || 10;
-      const snapshot = await db.collection("productDefinitions").orderBy("lastModified", "desc").limit(limit).get();
-      const items = snapshot.docs.map(doc => ({
-        id: doc.id,
-        title: doc.data().title,
-        lastModified: doc.data().lastModified?.toDate()?.toISOString()
-      }));
+      const { data, error } = await supabase
+        .from('product_definitions')
+        .select('id, title, last_modified')
+        .order('last_modified', { ascending: false })
+        .limit(limit);
 
-      return { content: [{ type: "text", text: JSON.stringify(items, null, 2) }] };
+      if (error) throw new Error(error.message);
+
+      return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
     }
 
     if (name === "get_product_definition") {
       const id = String(args?.id);
-      const doc = await db.collection("productDefinitions").doc(id).get();
+      const { data, error } = await supabase
+        .from('product_definitions')
+        .select('*')
+        .eq('id', id)
+        .single();
       
-      if (!doc.exists) throw new Error("Document not found");
+      if (error) throw new Error(error.message);
+      if (!data) throw new Error("Document not found");
       
-      return { content: [{ type: "text", text: JSON.stringify({ id: doc.id, ...doc.data() }, null, 2) }] };
+      return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
     }
 
     throw new McpError(ErrorCode.MethodNotFound, "Tool not found");

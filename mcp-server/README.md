@@ -1,17 +1,16 @@
 # Local MCP Server for Pyramid Solver
 
-This server connects your local IDE (Trae, VSCode, Claude) to your **live Firebase data** directly from your machine.
+This server connects your local IDE (Trae, VSCode, Claude) to your **live Supabase data** directly from your machine.
 
 ## 1. Setup Credentials (REQUIRED)
 
-This server needs permission to access your database.
+This server needs permission to access your database. You need your Supabase URL and Service Key (Role: `service_role`).
 
-1. Go to [Firebase Console > Project Settings > Service accounts](https://console.firebase.google.com/project/pyramid-s/settings/serviceaccounts/adminsdk).
-2. Click **Generate new private key**.
-3. Download the JSON file.
-4. Rename it to `service-account.json`.
-5. Move it into this folder:
-   `/home/pouria/projects/pyramid-solver/mcp-server/service-account.json`
+1. Go to your Supabase Project Settings > API.
+2. Find **Project URL**.
+3. Find **Project API keys** > `service_role` (secret).
+
+Create a `.env` file in this directory (`/mcp-server/.env`) or pass them directly in the MCP config.
 
 ## 2. Configure Trae / Claude Desktop
 
@@ -23,7 +22,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (Mac) or 
 **For Trae:**
 Edit your MCP settings file (typically found in Settings > MCP).
 
-Add this configuration:
+Add this configuration (replace values with your actual keys):
 
 ```json
 {
@@ -34,23 +33,25 @@ Add this configuration:
         "/home/pouria/projects/pyramid-solver/mcp-server/build/index.js"
       ],
       "env": {
-        "GOOGLE_APPLICATION_CREDENTIALS": "/home/pouria/projects/pyramid-solver/mcp-server/service-account.json"
+        "SUPABASE_URL": "your_supabase_project_url",
+        "SUPABASE_SERVICE_KEY": "your_supabase_service_role_key"
       }
     }
   }
 }
 ```
 
-## 3. Restart & Use
+## 3. Build & Use
 
-1. Restart Trae or Claude.
-2. The server `pyramid-local` should now be active.
-3. Ask questions like:
+1. Run `npm install` in this directory.
+2. Run `npm run build` to compile the TypeScript code.
+3. Restart Trae or Claude.
+4. The server `pyramid-local` should now be active.
+5. Ask questions like:
    - "List my pyramids"
    - "Get details for pyramid ID..."
 
 ## Troubleshooting
 
 - **"Module not found"**: Run `npm install` in this directory.
-- **"Permission denied"**: Ensure `service-account.json` is correct and path is absolute.
-- **Updates**: If you change the code in `src/`, run `npm run build` to update the server.
+- **"Updates"**: If you change the code in `src/`, run `npm run build` to update the server.
