@@ -143,6 +143,19 @@ export const duplicatePyramid = async (userId: string, pyramidId: string): Promi
     }
 };
 
+// Rename a pyramid
+export const renamePyramid = async (pyramidId: string, newTitle: string): Promise<void> => {
+    try {
+        await updateDoc(doc(db, 'pyramids', pyramidId), {
+            title: newTitle,
+            lastModified: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error("Error renaming pyramid:", error);
+        throw error;
+    }
+};
+
 // Update pyramid context sources
 export const updatePyramidContextSources = async (pyramidId: string, contextSources: any[]): Promise<void> => {
     try {

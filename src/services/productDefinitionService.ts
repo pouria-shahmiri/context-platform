@@ -248,3 +248,18 @@ export const deleteProductDefinition = async (id: string) => {
         throw error;
     }
 };
+
+/**
+ * Rename a product definition
+ */
+export const renameProductDefinition = async (id: string, newTitle: string): Promise<void> => {
+    try {
+        await updateDoc(doc(db, TABLE_NAME, id), {
+            title: newTitle,
+            lastModified: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error("Error renaming product definition:", error);
+        throw error;
+    }
+};

@@ -26,7 +26,7 @@ const Navbar: React.FC = () => {
         <Flex gap="4" align="center">
             <Link to="/dashboard" className="no-underline text-black cursor-pointer">
                 <Text size="5" weight="bold" className="text-gray-900 hover:text-indigo-600 transition-colors cursor-pointer">
-                Product Platform
+                Context Platform
                 </Text>
             </Link>
         </Flex>

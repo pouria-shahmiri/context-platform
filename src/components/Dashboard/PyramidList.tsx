@@ -7,10 +7,11 @@ interface PyramidListProps {
   pyramids: Pyramid[];
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
+  onRename: (id: string, currentTitle: string) => void;
   loading?: boolean;
 }
 
-const PyramidList: React.FC<PyramidListProps> = ({ pyramids, onDelete, onDuplicate, loading }) => {
+const PyramidList: React.FC<PyramidListProps> = ({ pyramids, onDelete, onDuplicate, onRename, loading }) => {
   if (loading) {
      // Optional: Add a skeleton loader or similar if desired.
      // For now just returning null or maybe a loading text
@@ -34,6 +35,7 @@ const PyramidList: React.FC<PyramidListProps> = ({ pyramids, onDelete, onDuplica
           pyramid={pyramid} 
           onDelete={onDelete} 
           onDuplicate={onDuplicate}
+          onRename={onRename}
         />
       ))}
     </Grid>

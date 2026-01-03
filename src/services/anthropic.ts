@@ -211,13 +211,72 @@ PATH: ${fieldPath}
 DESCRIPTION/CONTEXT: "${fieldDescription}"
 
 TASK:
-Suggest a professional, best-practice value for this field.
-- If the field expects a list, provide a bulleted list or newline-separated items.
+Suggest a professional, detailed, and best-practice value for this field.
+- If the field expects a list, provide a bulleted list or newline-separated items. Include brief explanations for key items if beneficial.
 - If it expects a key-value map, provide "Key: Value" format.
-- If it expects a description, provide a concise but comprehensive paragraph.
+- If it expects a description, provide a comprehensive paragraph or two, explaining the reasoning and specific technologies or patterns recommended.
+- Do NOT provide single-word answers unless the field is strictly a simple property (like a version number).
+- Provide industry-standard recommendations that fit the context of the architecture title.
 
 Your response should be ONLY the content to be inserted into the field, without conversational filler.
   `;
+
+  try {
+    const msg = await anthropic.messages.create({
+      model: "claude-3-haiku-20240307",
+      max_tokens: 1024,
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    return (msg.content[0] as any).text;
+  } catch (error) {
+    console.error("AI Suggestion Error:", error);
+    throw error;
+  }
+};
+
+/**
+ * Generate a suggestion for a Technical Task field
+ */
+export const generateTechnicalTaskSuggestion = async (
+  apiKey: string,
+  taskTitle: string,
+  taskType: string,
+  fieldLabel: string,
+  fieldDescription: string,
+  currentTaskContext: string,
+  globalContext: string
+): Promise<string> => {
+  if (!apiKey) throw new Error("API Key is missing");
+
+  const anthropic = new Anthropic({
+    apiKey: apiKey,
+    dangerouslyAllowBrowser: true
+  });
+
+  const prompt = `
+You are an expert software engineer and technical lead.
+
+TASK TITLE: "${taskTitle}"
+TASK TYPE: "${taskType}"
+
+CURRENT FIELD: "${fieldLabel}"
+DESCRIPTION: "${fieldDescription}"
+
+EXISTING TASK DATA:
+${currentTaskContext}
+
+GLOBAL PROJECT CONTEXT:
+${globalContext}
+
+TASK:
+Based on the provided task details and global context, suggest a professional, specific, and actionable content for the "${fieldLabel}" field.
+- If the field implies code, provide code snippets or file paths.
+- If it implies a list (e.g., dependencies, files), provide a clean list.
+- If it implies a description, be concise but thorough.
+
+Return ONLY the suggested content for this field. Do not include "Here is the suggestion" or markdown blocks unless appropriate for the field value itself.
+`;
 
   try {
     const msg = await anthropic.messages.create({

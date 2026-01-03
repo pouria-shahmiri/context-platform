@@ -4,9 +4,11 @@ import { getPyramid } from '../services/pyramidService';
 import { getProductDefinition } from '../services/productDefinitionService';
 import { getContextDocument } from '../services/contextDocumentService';
 import { getTechnicalArchitecture } from '../services/technicalArchitectureService';
+import { getTechnicalTask, generateMarkdown } from '../services/technicalTaskService';
+import { getUserGlobalContext, saveUserGlobalContext } from '../services/userSettingsService';
 
 interface ContextSource {
-    type: 'pyramid' | 'productDefinition' | 'contextDocument' | 'technicalArchitecture';
+    type: 'pyramid' | 'productDefinition' | 'contextDocument' | 'technicalArchitecture' | 'technicalTask';
     id: string;
     title: string;
 }
@@ -42,7 +44,7 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   const [isContextLoading, setIsContextLoading] = useState(false);
   const [isContextModalOpen, setIsContextModalOpen] = useState(false);
 
-  // Load from local storage when user changes
+  // Load from Firebase when user changes
   useEffect(() => {
     if (authLoading) return;
 
@@ -51,26 +53,32 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
       setIsInitialized(true);
       return;
     }
-    const key = `globalContextSources_${user.uid}`;
-    const saved = localStorage.getItem(key);
-    if (saved) {
-      try {
-        setSelectedSources(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to parse saved context sources", e);
-        setSelectedSources([]);
-      }
-    } else {
-      setSelectedSources([]);
-    }
-    setIsInitialized(true);
+
+    // Fetch from Firebase
+    getUserGlobalContext(user.uid)
+        .then(sources => {
+            if (sources) {
+                setSelectedSources(sources);
+            } else {
+                setSelectedSources([]);
+            }
+        })
+        .catch(err => {
+            console.error("Failed to load global context sources", err);
+            setSelectedSources([]);
+        })
+        .finally(() => {
+            setIsInitialized(true);
+        });
   }, [user, authLoading]);
 
-  // Save to local storage whenever selectedSources changes
+  // Save to Firebase whenever selectedSources changes
   useEffect(() => {
     if (authLoading || !user || !isInitialized) return;
-    const key = `globalContextSources_${user.uid}`;
-    localStorage.setItem(key, JSON.stringify(selectedSources));
+    
+    // Save to Firebase (fire and forget)
+    saveUserGlobalContext(user.uid, selectedSources)
+        .catch(err => console.error("Failed to save global context sources", err));
   }, [selectedSources, user, authLoading, isInitialized]);
 
   // Fetch and aggregate context data
@@ -101,8 +109,32 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
             const pd = await getProductDefinition(source.id);
             if (pd) {
                 contextText += `\n--- PRODUCT DEFINITION: ${pd.title} ---\n`;
-                // Basic representation of product definition data
-                contextText += JSON.stringify(pd.data, null, 2);
+                
+                // Format the product definition tree structure
+                if (pd.data && pd.data['root']) {
+                  const formatNode = (nodeId: string, depth = 0): string => {
+                    const node = pd.data[nodeId];
+                    if (!node) return "";
+                    
+                    const indent = "  ".repeat(depth);
+                    let text = `${indent}- ${node.label}`;
+                    if (node.description) {
+                       text += `: ${node.description}`;
+                    }
+                    text += "\n";
+                    
+                    if (node.children) {
+                      node.children.forEach((childId: string) => {
+                        text += formatNode(childId, depth + 1);
+                      });
+                    }
+                    return text;
+                  };
+                  
+                  contextText += formatNode('root');
+                } else {
+                   contextText += JSON.stringify(pd.data, null, 2);
+                }
             }
           } else if (source.type === 'technicalArchitecture') {
             const ta = await getTechnicalArchitecture(source.id);
@@ -114,36 +146,18 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
                 contextText += `Tech Stack: ${ta.technology_stack.main.frontend.framework}, ${ta.technology_stack.main.backend.runtime}, ${ta.technology_stack.main.backend.database}\n`;
                 contextText += JSON.stringify(ta.system_architecture, null, 2);
             }
-          } else if (source.type === 'contextDocument') {
-            contextText += `\n--- PRODUCT DEFINITION: ${pd.title} ---\n`;
-            
-            // Format the product definition tree structure
-            if (pd.data && pd.data['root']) {
-              const formatNode = (nodeId: string, depth = 0): string => {
-                const node = pd.data[nodeId];
-                if (!node) return "";
-                
-                const indent = "  ".repeat(depth);
-                let text = `${indent}- ${node.label}`;
-                if (node.description) {
-                   text += `: ${node.description}`;
-                }
-                text += "\n";
-                
-                if (node.children) {
-                  node.children.forEach(childId => {
-                    text += formatNode(childId, depth + 1);
-                  });
-                }
-                return text;
-              };
-              
-              contextText += formatNode('root');
+          } else if (source.type === 'technicalTask') {
+            const t = await getTechnicalTask(source.id);
+            if (t) {
+                contextText += `\n--- TECHNICAL TASK: ${t.title} ---\n`;
+                contextText += generateMarkdown(t);
             }
           } else if (source.type === 'contextDocument') {
              const doc = await getContextDocument(source.id);
-             contextText += `\n--- DOCUMENT: ${doc.title} ---\n`;
-             contextText += `${doc.content}\n`;
+             if (doc) {
+                contextText += `\n--- DOCUMENT: ${doc.title} ---\n`;
+                contextText += `${doc.content}\n`;
+             }
           }
         } catch (err) {
             console.error(`Failed to fetch context from source ${source.title}`, err);

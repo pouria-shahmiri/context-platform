@@ -318,3 +318,92 @@ export const deleteTechnicalArchitecture = async (id: string): Promise<boolean> 
         return false;
     }
 };
+
+/**
+ * Rename a technical architecture
+ */
+export const renameTechnicalArchitecture = async (id: string, newTitle: string): Promise<boolean> => {
+    try {
+        await updateDoc(doc(db, TABLE_NAME, id), {
+            title: newTitle,
+            lastModified: new Date().toISOString()
+        });
+        return true;
+    } catch (e) {
+        console.error("Error renaming technical architecture: ", e);
+        return false;
+    }
+};
+
+/**
+ * Generate Markdown content for a technical architecture
+ */
+export const generateMarkdown = (architecture: TechnicalArchitecture): string => {
+    let md = `# ${architecture.title}\n\n`;
+    
+    if (architecture.metadata?.description) {
+        md += `> ${architecture.metadata.description}\n\n`;
+    }
+
+    const formatValue = (val: any, indent = 0): string => {
+        if (val === null || val === undefined || val === '') return 'N/A';
+        if (typeof val === 'string') return val;
+        if (Array.isArray(val)) {
+            if (val.length === 0) return 'None';
+            return '\n' + val.map(v => `${'  '.repeat(indent)}- ${v}`).join('\n');
+        }
+        if (typeof val === 'object') {
+            if (Object.keys(val).length === 0) return 'None';
+            let str = '\n';
+            for (const [k, v] of Object.entries(val)) {
+                // convert snake_case or camelCase to Title Case
+                const label = k.replace(/([A-Z])/g, " $1").replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+                str += `${'  '.repeat(indent)}- **${label}**: ${formatValue(v, indent + 1)}\n`;
+            }
+            return str;
+        }
+        return String(val);
+    };
+
+    const addSection = (title: string, data: any) => {
+        md += `## ${title}\n\n`;
+        if (!data) {
+            md += "N/A\n\n";
+            return;
+        }
+        
+        // Main
+        if (data.main) {
+             md += `### Main\n\n`;
+             for (const [key, value] of Object.entries(data.main)) {
+                 const label = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+                 md += `#### ${label}\n${formatValue(value)}\n\n`;
+             }
+        }
+        
+        // Advanced
+        if (data.advanced) {
+             md += `### Advanced\n\n`;
+             for (const [key, value] of Object.entries(data.advanced)) {
+                 const label = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+                 md += `#### ${label}\n${formatValue(value)}\n\n`;
+             }
+        }
+        
+        md += "---\n\n";
+    };
+
+    addSection("System Architecture", architecture.system_architecture);
+    addSection("Technology Stack", architecture.technology_stack);
+    addSection("Code Organization", architecture.code_organization);
+    addSection("Design Patterns", architecture.design_patterns);
+    addSection("API Standards", architecture.api_standards);
+    addSection("Security Standards", architecture.security_standards);
+    addSection("Performance Standards", architecture.performance_standards);
+    addSection("Testing Standards", architecture.testing_standards);
+    addSection("Deployment & CI/CD", architecture.deployment_cicd);
+    addSection("Preservation Rules", architecture.preservation_rules);
+    addSection("AI Development Instructions", architecture.ai_development_instructions);
+
+    return md;
+};

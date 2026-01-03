@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Box, Flex, Heading, TextField, Select, Text } from '@radix-ui/themes';
+import { Container, Box, Flex, Heading, TextField, Select, Text, Dialog, Button } from '@radix-ui/themes';
 import { Search } from 'lucide-react';
 import PyramidList from '../components/Dashboard/PyramidList';
 import CreatePyramidModal from '../components/Dashboard/CreatePyramidModal';
-import { getUserPyramids, deletePyramid, duplicatePyramid } from '../services/pyramidService';
+import { getUserPyramids, deletePyramid, duplicatePyramid, renamePyramid } from '../services/pyramidService';
 import { useAuth } from '../contexts/AuthContext';
 import { Pyramid } from '../types';
 
@@ -13,6 +13,11 @@ const PyramidsPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('recent'); // 'recent', 'modified', 'title'
+
+  // Rename State
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
+  const [renameNewTitle, setRenameNewTitle] = useState("");
 
   const fetchPyramids = async () => {
     if (!user) return;
@@ -46,6 +51,23 @@ const PyramidsPage: React.FC = () => {
       fetchPyramids(); 
     } catch (error) {
       alert("Failed to duplicate pyramid");
+    }
+  };
+
+  const handleRename = (id: string, currentTitle: string) => {
+    setRenameTargetId(id);
+    setRenameNewTitle(currentTitle);
+    setRenameDialogOpen(true);
+  };
+
+  const confirmRename = async () => {
+    if (!renameTargetId || !renameNewTitle.trim()) return;
+    try {
+      await renamePyramid(renameTargetId, renameNewTitle);
+      setRenameDialogOpen(false);
+      fetchPyramids();
+    } catch (error) {
+      alert("Failed to rename pyramid");
     }
   };
 
@@ -112,7 +134,41 @@ const PyramidsPage: React.FC = () => {
           loading={loading} 
           onDelete={handleDelete}
           onDuplicate={handleDuplicate}
+          onRename={handleRename}
         />
+
+        <Dialog.Root open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+          <Dialog.Content style={{ maxWidth: 450 }}>
+            <Dialog.Title>Rename Pyramid</Dialog.Title>
+            <Dialog.Description size="2" mb="4">
+              Enter a new title for this pyramid.
+            </Dialog.Description>
+
+            <Flex direction="column" gap="3">
+              <label>
+                <Text as="div" size="2" mb="1" weight="bold">
+                  Title
+                </Text>
+                <TextField.Root
+                  value={renameNewTitle}
+                  onChange={(e) => setRenameNewTitle(e.target.value)}
+                  placeholder="Enter new title"
+                />
+              </label>
+            </Flex>
+
+            <Flex gap="3" mt="4" justify="end">
+              <Dialog.Close>
+                <Button variant="soft" color="gray">
+                  Cancel
+                </Button>
+              </Dialog.Close>
+              <Button onClick={confirmRename}>
+                Save
+              </Button>
+            </Flex>
+          </Dialog.Content>
+        </Dialog.Root>
       </Container>
     </Box>
   );
