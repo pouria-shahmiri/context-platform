@@ -13,7 +13,7 @@ const LandingPage: React.FC = () => {
   return (
     <Flex direction="column" align="center" justify="center" style={{ height: '100vh' }} gap="4" className="bg-slate-50">
       <Heading size="9" className="text-indigo-600">
-        Product Platform
+        Context Platform
       </Heading>
       <Text size="4" color="gray" className="mb-8 max-w-md text-center">
       </Text>

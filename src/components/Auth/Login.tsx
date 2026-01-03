@@ -25,7 +25,7 @@ const Login: React.FC = () => {
     <Card style={{ maxWidth: 400, width: '100%' }}>
         <Box p="4">
             <Flex direction="column" gap="4" align="center">
-                <Text size="5" weight="bold">Welcome to Pyramid Solver</Text>
+                <Text size="5" weight="bold">Welcome to Context Platform</Text>
                 
                 {error && <Text size="2" color="red">{error}</Text>}
 
