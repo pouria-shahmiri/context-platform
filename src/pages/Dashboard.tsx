@@ -1,6 +1,6 @@
 import React from 'react';
 import { Container, Box, Flex, Heading, Card, Text, Button } from '@radix-ui/themes';
-import { GitMerge, ArrowRight, BookOpen, Pyramid, LucideIcon, Server } from 'lucide-react';
+import { GitMerge, ArrowRight, BookOpen, Pyramid, LucideIcon, Server, CheckSquare } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
 
@@ -73,6 +73,14 @@ const Dashboard: React.FC = () => {
                 icon={Server}
                 to="/technical-architectures"
                 color="bg-purple-600"
+            />
+
+            <ToolCard 
+                title="Technical Tasks" 
+                description="Manage implementation tasks and bug fixes. Link tasks to technical architecture and track progress in pipelines."
+                icon={CheckSquare}
+                to="/technical-tasks"
+                color="bg-blue-600"
             />
         </div>
       </Container>

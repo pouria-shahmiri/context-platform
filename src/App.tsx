@@ -12,6 +12,8 @@ import ContextDocumentsPage from './pages/ContextDocumentsPage';
 import ContextDocumentEditor from './pages/ContextDocumentEditor';
 import { TechnicalArchitecturesPage } from './pages/TechnicalArchitecturesPage';
 import { TechnicalArchitectureEditorPage } from './pages/TechnicalArchitectureEditorPage';
+import { TechnicalTaskBoard } from './pages/TechnicalTaskBoard';
+import { TechnicalTaskDetail } from './pages/TechnicalTaskDetail';
 
 import AuthenticatedLayout from './components/Layout/AuthenticatedLayout';
 
@@ -97,6 +99,24 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <ContextDocumentEditor />
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* Technical Tasks Tool Routes */}
+              <Route 
+                path="/technical-tasks" 
+                element={
+                  <ProtectedRoute>
+                    <TechnicalTaskBoard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/technical-task/:id" 
+                element={
+                  <ProtectedRoute>
+                    <TechnicalTaskDetail />
                   </ProtectedRoute>
                 } 
               />

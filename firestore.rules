@@ -71,5 +71,17 @@ rules_version = '2';
       allow create: if isOwner(request.resource.data.userId);
       allow read, update, delete: if isOwner(resource.data.userId);
     }
+
+    // Technical Tasks collection
+    match /technicalTasks/{taskId} {
+      allow create: if isOwner(request.resource.data.userId);
+      allow read, update, delete: if isOwner(resource.data.userId);
+    }
+
+    // Pipelines collection
+    match /pipelines/{pipelineId} {
+      allow create: if isOwner(request.resource.data.userId);
+      allow read, update, delete: if isOwner(resource.data.userId);
+    }
   } 
 }

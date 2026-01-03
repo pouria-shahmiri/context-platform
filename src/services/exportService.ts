@@ -1,5 +1,7 @@
 import * as XLSX from 'xlsx';
-import { Pyramid, ContextDocument, ProductDefinition } from '../types';
+import { Pyramid, ContextDocument, ProductDefinition, TechnicalArchitecture } from '../types';
+import { generateMarkdown as generateTechnicalArchitectureMarkdown } from './technicalArchitectureService';
+
 
 // ==========================================
 // Helper Functions
@@ -244,4 +246,143 @@ export const exportProductDefinitionToMarkdown = (def: ProductDefinition) => {
   }
 
   downloadFile(md, getSafeFilename(def.title, 'product_def.md'), 'text/markdown');
+};
+
+// ==========================================
+// Technical Architecture Export Logic
+// ==========================================
+
+export const exportTechnicalArchitectureToMarkdown = (arch: TechnicalArchitecture) => {
+  let md = `# ${arch.title}\n\n`;
+  if (arch.metadata?.description) {
+    md += `> ${arch.metadata.description}\n\n`;
+  }
+
+  // System Architecture
+  md += `## System Architecture\n\n`;
+  md += `**Type**: ${arch.system_architecture.main.architecture_type}\n\n`;
+  md += `**Data Flow**: ${arch.system_architecture.main.data_flow}\n\n`;
+  
+  md += `### Layers\n`;
+  arch.system_architecture.main.layers.forEach(layer => {
+    md += `- ${layer}\n`;
+  });
+  md += `\n`;
+
+  md += `### Core Principles\n`;
+  arch.system_architecture.main.core_principles.forEach(principle => {
+    md += `- ${principle}\n`;
+  });
+  md += `\n`;
+
+  // Technology Stack
+  md += `## Technology Stack\n\n`;
+  
+  md += `### Frontend\n`;
+  md += `- **Framework**: ${arch.technology_stack.main.frontend.framework}\n`;
+  md += `- **Language**: ${arch.technology_stack.main.frontend.language}\n`;
+  md += `- **State Management**: ${arch.technology_stack.main.frontend.state}\n`;
+  md += `- **Styling**: ${arch.technology_stack.main.frontend.styling}\n`;
+  md += `\n`;
+
+  md += `### Backend\n`;
+  md += `- **Language**: ${arch.technology_stack.main.backend.language}\n`;
+  md += `- **Framework**: ${arch.technology_stack.main.backend.framework}\n`;
+  md += `- **Database**: ${arch.technology_stack.main.backend.database}\n`;
+  md += `- **ORM**: ${arch.technology_stack.main.backend.orm}\n`;
+  md += `\n`;
+
+  // Code Organization
+  md += `## Code Organization\n\n`;
+  md += `### Directory Structure\n`;
+  Object.entries(arch.code_organization.main.directory_structure).forEach(([key, value]) => {
+    md += `- **${key}**: ${value}\n`;
+  });
+  md += `\n`;
+
+  md += `### Naming Conventions\n`;
+  Object.entries(arch.code_organization.main.naming_conventions).forEach(([key, value]) => {
+    md += `- **${key}**: ${value}\n`;
+  });
+  md += `\n`;
+
+  // API Standards
+  md += `## API Standards\n\n`;
+  md += `- **URL Format**: ${arch.api_standards.main.url_format}\n`;
+  
+  md += `### HTTP Methods\n`;
+  Object.entries(arch.api_standards.main.http_methods).forEach(([key, value]) => {
+    md += `- **${key}**: ${value}\n`;
+  });
+  md += `\n`;
+
+  md += `### Status Codes\n`;
+  Object.entries(arch.api_standards.main.status_codes).forEach(([key, value]) => {
+    md += `- **${key}**: ${value}\n`;
+  });
+  md += `\n`;
+
+  // Security Standards
+  md += `## Security Standards\n\n`;
+  md += `### Authentication\n`;
+  Object.entries(arch.security_standards.main.authentication).forEach(([key, value]) => {
+    md += `- **${key}**: ${value}\n`;
+  });
+  md += `\n`;
+
+  md += `### Data Protection\n`;
+  Object.entries(arch.security_standards.main.data_protection).forEach(([key, value]) => {
+    md += `- **${key}**: ${Array.isArray(value) ? value.join(', ') : value}\n`;
+  });
+  md += `\n`;
+
+  // Testing Standards
+  md += `## Testing Standards\n\n`;
+  md += `### Test Pyramid\n`;
+  Object.entries(arch.testing_standards.main.test_pyramid).forEach(([key, value]) => {
+    md += `- **${key}**: ${value}\n`;
+  });
+  md += `\n`;
+
+  md += `### Coverage Goals\n`;
+  Object.entries(arch.testing_standards.main.coverage_requirements).forEach(([key, value]) => {
+    md += `- **${key}**: ${value}\n`;
+  });
+  md += `\n`;
+
+  md += `### Frameworks\n`;
+  Object.entries(arch.testing_standards.main.frameworks).forEach(([key, value]) => {
+    md += `- **${key}**: ${value}\n`;
+  });
+  md += `\n`;
+
+  // Deployment & CI/CD
+  md += `## Deployment & CI/CD\n\n`;
+  md += `### Environments\n`;
+  Object.entries(arch.deployment_cicd.main.environments).forEach(([key, value]) => {
+    md += `- **${key}**: ${value}\n`;
+  });
+  md += `\n`;
+
+  md += `### CI Pipeline\n`;
+  arch.deployment_cicd.main.ci_pipeline.forEach(step => {
+    md += `- ${step}\n`;
+  });
+  md += `\n`;
+
+  // AI Instructions
+  md += `## AI Instructions\n\n`;
+  md += `### Context Awareness\n`;
+  arch.ai_development_instructions.main.context_awareness.forEach(item => {
+    md += `- ${item}\n`;
+  });
+  md += `\n`;
+
+  md += `### Code Generation Rules\n`;
+  arch.ai_development_instructions.main.code_generation.forEach(item => {
+    md += `- ${item}\n`;
+  });
+  md += `\n`;
+
+  downloadFile(md, getSafeFilename(arch.title, 'architecture.md'), 'text/markdown');
 };

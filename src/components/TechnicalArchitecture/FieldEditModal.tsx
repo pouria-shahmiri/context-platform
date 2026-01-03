@@ -140,6 +140,7 @@ const FieldEditModal: React.FC<FieldEditModalProps> = ({
               }
               rows={12}
               className="mt-1 font-mono text-sm"
+              style={{ resize: 'vertical' }}
             />
           </Box>
 

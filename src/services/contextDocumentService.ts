@@ -111,3 +111,18 @@ export const deleteContextDocument = async (id: string): Promise<void> => {
       throw error;
   }
 };
+
+/**
+ * Rename a context document
+ */
+export const renameContextDocument = async (id: string, newTitle: string): Promise<void> => {
+    try {
+        await updateDoc(doc(db, TABLE_NAME, id), {
+            title: newTitle,
+            lastModified: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error("Error renaming document:", error);
+        throw error;
+    }
+};

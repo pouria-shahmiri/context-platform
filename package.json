@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
+    "@hello-pangea/dnd": "^18.0.1",
     "@radix-ui/themes": "^3.2.1",
     "ai": "^6.0.3",
     "dagre": "^0.8.5",

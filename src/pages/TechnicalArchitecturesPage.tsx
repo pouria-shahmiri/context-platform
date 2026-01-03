@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Box, Flex, Heading, TextField, Text, Button, Card, IconButton, Dialog } from '@radix-ui/themes';
-import { Search, Plus, Server, Trash2 } from 'lucide-react';
+import { Search, Plus, Server, Trash2, Edit2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { getUserTechnicalArchitectures, createTechnicalArchitecture, deleteTechnicalArchitecture } from '../services/technicalArchitectureService';
+import { getUserTechnicalArchitectures, createTechnicalArchitecture, deleteTechnicalArchitecture, renameTechnicalArchitecture } from '../services/technicalArchitectureService';
 import { useNavigate } from 'react-router-dom';
 import { TechnicalArchitecture } from '../types';
 import AuthenticatedLayout from '../components/Layout/AuthenticatedLayout';
@@ -18,6 +18,11 @@ export const TechnicalArchitecturesPage: React.FC = () => {
   const [isCreateOpen, setIsCreateOpen] = useState<boolean>(false);
   const [newTitle, setNewTitle] = useState<string>('');
   const [isCreating, setIsCreating] = useState<boolean>(false);
+
+  // Rename State
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
+  const [renameNewTitle, setRenameNewTitle] = useState("");
 
   const fetchArchitectures = async () => {
     if (!user) return;
@@ -63,6 +68,24 @@ export const TechnicalArchitecturesPage: React.FC = () => {
         } catch (error) {
             alert("Failed to delete architecture");
         }
+    }
+  };
+
+  const handleRename = (id: string, currentTitle: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRenameTargetId(id);
+    setRenameNewTitle(currentTitle);
+    setRenameDialogOpen(true);
+  };
+
+  const confirmRename = async () => {
+    if (!renameTargetId || !renameNewTitle.trim()) return;
+    try {
+      await renameTechnicalArchitecture(renameTargetId, renameNewTitle);
+      setRenameDialogOpen(false);
+      fetchArchitectures();
+    } catch (error) {
+      alert("Failed to rename architecture");
     }
   };
 
@@ -160,7 +183,10 @@ export const TechnicalArchitecturesPage: React.FC = () => {
                                 </Text>
                             </Flex>
                         </Box>
-                        <Flex justify="end" p="2" className="border-t border-gray-100">
+                        <Flex justify="end" p="2" gap="2" className="border-t border-gray-100">
+                             <IconButton size="1" variant="ghost" color="gray" onClick={(e) => handleRename(arch.id, arch.title, e)} className="cursor-pointer">
+                                <Edit2 size={14} />
+                            </IconButton>
                              <IconButton size="1" variant="ghost" color="red" onClick={(e) => handleDelete(arch.id, e)} className="cursor-pointer">
                                 <Trash2 size={14} />
                             </IconButton>
@@ -169,6 +195,39 @@ export const TechnicalArchitecturesPage: React.FC = () => {
                 ))}
             </div>
         )}
+
+        <Dialog.Root open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+          <Dialog.Content style={{ maxWidth: 450 }}>
+            <Dialog.Title>Rename Architecture</Dialog.Title>
+            <Dialog.Description size="2" mb="4">
+              Enter a new title for this architecture.
+            </Dialog.Description>
+
+            <Flex direction="column" gap="3">
+              <label>
+                <Text as="div" size="2" mb="1" weight="bold">
+                  Title
+                </Text>
+                <TextField.Root
+                  value={renameNewTitle}
+                  onChange={(e) => setRenameNewTitle(e.target.value)}
+                  placeholder="Enter new title"
+                />
+              </label>
+            </Flex>
+
+            <Flex gap="3" mt="4" justify="end">
+              <Dialog.Close>
+                <Button variant="soft" color="gray">
+                  Cancel
+                </Button>
+              </Dialog.Close>
+              <Button onClick={confirmRename}>
+                Save
+              </Button>
+            </Flex>
+          </Dialog.Content>
+        </Dialog.Root>
       </Container>
     </Box>
     </AuthenticatedLayout>

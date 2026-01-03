@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Box, Flex, Heading, TextField, Text, Button, Card, Badge, IconButton, Dialog } from '@radix-ui/themes';
-import { Search, Plus, GitMerge, Trash2 } from 'lucide-react';
+import { Search, Plus, GitMerge, Trash2, Edit2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { getUserProductDefinitions, createProductDefinition, deleteProductDefinition } from '../services/productDefinitionService';
+import { getUserProductDefinitions, createProductDefinition, deleteProductDefinition, renameProductDefinition } from '../services/productDefinitionService';
 import { useNavigate } from 'react-router-dom';
 import { ProductDefinition } from '../types';
 
@@ -17,6 +17,11 @@ const ProductDefinitionsPage: React.FC = () => {
   const [isCreateOpen, setIsCreateOpen] = useState<boolean>(false);
   const [newTitle, setNewTitle] = useState<string>('');
   const [isCreating, setIsCreating] = useState<boolean>(false);
+
+  // Rename State
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
+  const [renameNewTitle, setRenameNewTitle] = useState("");
 
   const fetchDefinitions = async () => {
     if (!user) return;
@@ -63,7 +68,25 @@ const ProductDefinitionsPage: React.FC = () => {
     }
   };
 
-  const filteredDefinitions = definitions.filter(d => 
+  const handleRename = (id: string, currentTitle: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRenameTargetId(id);
+    setRenameNewTitle(currentTitle);
+    setRenameDialogOpen(true);
+  };
+
+  const confirmRename = async () => {
+    if (!renameTargetId || !renameNewTitle.trim()) return;
+    try {
+      await renameProductDefinition(renameTargetId, renameNewTitle);
+      setRenameDialogOpen(false);
+      fetchDefinitions();
+    } catch (error) {
+      alert("Failed to rename definition");
+    }
+  };
+
+  const filteredDefinitions = definitions.filter(d =>  
     d.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -164,7 +187,10 @@ const ProductDefinitionsPage: React.FC = () => {
                                 </Flex>
                             </Flex>
                         </Box>
-                        <Flex justify="end" p="2" className="border-t border-gray-100">
+                        <Flex justify="end" p="2" gap="2" className="border-t border-gray-100">
+                             <IconButton size="1" variant="ghost" color="gray" onClick={(e) => handleRename(def.id, def.title, e)} className="cursor-pointer">
+                                <Edit2 size={14} />
+                            </IconButton>
                              <IconButton size="1" variant="ghost" color="red" onClick={(e) => handleDelete(def.id, e)} className="cursor-pointer">
                                 <Trash2 size={14} />
                             </IconButton>
@@ -173,6 +199,39 @@ const ProductDefinitionsPage: React.FC = () => {
                 ))}
             </div>
         )}
+
+        <Dialog.Root open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+          <Dialog.Content style={{ maxWidth: 450 }}>
+            <Dialog.Title>Rename Product Definition</Dialog.Title>
+            <Dialog.Description size="2" mb="4">
+              Enter a new title for this definition.
+            </Dialog.Description>
+
+            <Flex direction="column" gap="3">
+              <label>
+                <Text as="div" size="2" mb="1" weight="bold">
+                  Title
+                </Text>
+                <TextField.Root
+                  value={renameNewTitle}
+                  onChange={(e) => setRenameNewTitle(e.target.value)}
+                  placeholder="Enter new title"
+                />
+              </label>
+            </Flex>
+
+            <Flex gap="3" mt="4" justify="end">
+              <Dialog.Close>
+                <Button variant="soft" color="gray">
+                  Cancel
+                </Button>
+              </Dialog.Close>
+              <Button onClick={confirmRename}>
+                Save
+              </Button>
+            </Flex>
+          </Dialog.Content>
+        </Dialog.Root>
       </Container>
     </Box>
   );

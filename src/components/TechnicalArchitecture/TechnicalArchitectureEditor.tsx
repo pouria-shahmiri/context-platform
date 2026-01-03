@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { TechnicalArchitecture } from '../../types';
-import { updateTechnicalArchitecture } from '../../services/technicalArchitectureService';
-import { Card, Grid, Heading, Flex, Text, Badge, Box } from '@radix-ui/themes';
-import { CheckCircle, Circle } from 'lucide-react';
+import { updateTechnicalArchitecture, generateMarkdown } from '../../services/technicalArchitectureService';
+import { exportTechnicalArchitectureToMarkdown } from '../../services/exportService';
+
+import { Card, Grid, Heading, Flex, Text, Badge, Box, Button } from '@radix-ui/themes';
+import { CheckCircle, Circle, Download } from 'lucide-react';
 import FieldEditModal from './FieldEditModal';
 
 interface EditorProps {
@@ -144,6 +146,9 @@ export const TechnicalArchitectureEditor: React.FC<EditorProps> = ({ architectur
                     </Text>
                 </div>
                 <Flex align="center" gap="2">
+                    <Button variant="outline" color="gray" onClick={() => exportTechnicalArchitectureToMarkdown(architecture)}>
+                        <Download size={16} className="mr-2" /> Export .md
+                    </Button>
                     {isSaving && <Text size="2" color="gray">Saving...</Text>}
                 </Flex>
             </Flex>

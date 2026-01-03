@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Box, Flex, Heading, TextField, Text, Button, Card, IconButton, Dialog } from '@radix-ui/themes';
-import { Plus, Trash2, FileText } from 'lucide-react';
+import { Plus, Trash2, FileText, Edit2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { getUserContextDocuments, createContextDocument, deleteContextDocument } from '../services/contextDocumentService';
+import { getUserContextDocuments, createContextDocument, deleteContextDocument, renameContextDocument } from '../services/contextDocumentService';
 import { Link, useNavigate } from 'react-router-dom';
 import { ContextDocument } from '../types';
 
@@ -17,6 +17,11 @@ const ContextDocumentsPage: React.FC = () => {
   const [isCreateOpen, setIsCreateOpen] = useState<boolean>(false);
   const [newTitle, setNewTitle] = useState<string>('');
   const [isCreating, setIsCreating] = useState<boolean>(false);
+
+  // Rename State
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
+  const [renameNewTitle, setRenameNewTitle] = useState("");
 
   const fetchDocuments = async () => {
     if (!user) return;
@@ -61,6 +66,24 @@ const ContextDocumentsPage: React.FC = () => {
         } catch (error) {
             alert("Failed to delete document");
         }
+    }
+  };
+
+  const handleRename = (id: string, currentTitle: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRenameTargetId(id);
+    setRenameNewTitle(currentTitle);
+    setRenameDialogOpen(true);
+  };
+
+  const confirmRename = async () => {
+    if (!renameTargetId || !renameNewTitle.trim()) return;
+    try {
+      await renameContextDocument(renameTargetId, renameNewTitle);
+      setRenameDialogOpen(false);
+      fetchDocuments();
+    } catch (error) {
+      alert("Failed to rename document");
     }
   };
 
@@ -153,14 +176,24 @@ const ContextDocumentsPage: React.FC = () => {
                                 return date.toLocaleDateString();
                             })()}
                         </Text>
-                        <IconButton 
-                            variant="ghost" 
-                            color="red" 
-                            onClick={(e) => handleDelete(doc.id, e)}
-                            className="cursor-pointer hover:bg-red-50"
-                        >
-                            <Trash2 size={16} />
-                        </IconButton>
+                        <Flex gap="2">
+                            <IconButton 
+                                variant="ghost" 
+                                color="gray" 
+                                onClick={(e) => handleRename(doc.id, doc.title, e)}
+                                className="cursor-pointer hover:bg-gray-50"
+                            >
+                                <Edit2 size={16} />
+                            </IconButton>
+                            <IconButton 
+                                variant="ghost" 
+                                color="red" 
+                                onClick={(e) => handleDelete(doc.id, e)}
+                                className="cursor-pointer hover:bg-red-50"
+                            >
+                                <Trash2 size={16} />
+                            </IconButton>
+                        </Flex>
                     </Flex>
                 </Card>
             ))}
@@ -171,6 +204,39 @@ const ContextDocumentsPage: React.FC = () => {
                 </Box>
             )}
         </div>
+
+        <Dialog.Root open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+          <Dialog.Content style={{ maxWidth: 450 }}>
+            <Dialog.Title>Rename Document</Dialog.Title>
+            <Dialog.Description size="2" mb="4">
+              Enter a new title for this document.
+            </Dialog.Description>
+
+            <Flex direction="column" gap="3">
+              <label>
+                <Text as="div" size="2" mb="1" weight="bold">
+                  Title
+                </Text>
+                <TextField.Root
+                  value={renameNewTitle}
+                  onChange={(e) => setRenameNewTitle(e.target.value)}
+                  placeholder="Enter new title"
+                />
+              </label>
+            </Flex>
+
+            <Flex gap="3" mt="4" justify="end">
+              <Dialog.Close>
+                <Button variant="soft" color="gray">
+                  Cancel
+                </Button>
+              </Dialog.Close>
+              <Button onClick={confirmRename}>
+                Save
+              </Button>
+            </Flex>
+          </Dialog.Content>
+        </Dialog.Root>
       </Container>
     </Box>
   );

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Flex, Text, Button, DropdownMenu, IconButton, Box } from '@radix-ui/themes';
-import { Clock, ArrowRight, Trash2, MoreVertical, Copy } from 'lucide-react';
+import { Clock, ArrowRight, Trash2, MoreVertical, Copy, Edit2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Pyramid } from '../../types';
 
@@ -8,9 +8,10 @@ interface PyramidCardProps {
   pyramid: Pyramid;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
+  onRename: (id: string, currentTitle: string) => void;
 }
 
-const PyramidCard: React.FC<PyramidCardProps> = ({ pyramid, onDelete, onDuplicate }) => {
+const PyramidCard: React.FC<PyramidCardProps> = ({ pyramid, onDelete, onDuplicate, onRename }) => {
   const navigate = useNavigate();
 
   const handleOpen = () => {
@@ -25,6 +26,10 @@ const PyramidCard: React.FC<PyramidCardProps> = ({ pyramid, onDelete, onDuplicat
 
   const handleDuplicate = () => {
     onDuplicate(pyramid.id);
+  };
+
+  const handleRename = () => {
+    onRename(pyramid.id, pyramid.title);
   };
 
   // Format date safely
@@ -66,6 +71,9 @@ const PyramidCard: React.FC<PyramidCardProps> = ({ pyramid, onDelete, onDuplicat
                 </IconButton>
               </DropdownMenu.Trigger>
               <DropdownMenu.Content>
+                <DropdownMenu.Item onClick={handleRename}>
+                  <Edit2 size={14} className="mr-2" /> Rename
+                </DropdownMenu.Item>
                 <DropdownMenu.Item onClick={handleDuplicate}>
                   <Copy size={14} className="mr-2" /> Duplicate
                 </DropdownMenu.Item>
