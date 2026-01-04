@@ -92,7 +92,7 @@ const ContextDocumentsPage: React.FC = () => {
   );
 
   return (
-    <Box className="h-full bg-white">
+    <Box className="h-full flex-grow bg-white">
       <Container size="4" className="p-4">
         {/* Header Section */}
         <Flex justify="between" align="center" className="mb-8 mt-6">

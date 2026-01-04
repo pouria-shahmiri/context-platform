@@ -1,17 +1,14 @@
 import { db } from './firebase';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { ContextSource } from '../types';
 
 interface GlobalContextSettings {
-    selectedSources: {
-        type: 'pyramid' | 'productDefinition' | 'contextDocument' | 'technicalArchitecture' | 'technicalTask';
-        id: string;
-        title: string;
-    }[];
+    selectedSources: ContextSource[];
 }
 
 const USERS_COLLECTION = 'users';
 
-export const saveUserGlobalContext = async (userId: string, selectedSources: GlobalContextSettings['selectedSources']): Promise<void> => {
+export const saveUserGlobalContext = async (userId: string, selectedSources: ContextSource[]): Promise<void> => {
     try {
         const userRef = doc(db, USERS_COLLECTION, userId);
         
@@ -27,14 +24,14 @@ export const saveUserGlobalContext = async (userId: string, selectedSources: Glo
     }
 };
 
-export const getUserGlobalContext = async (userId: string): Promise<GlobalContextSettings['selectedSources'] | null> => {
+export const getUserGlobalContext = async (userId: string): Promise<ContextSource[] | null> => {
     try {
         const userRef = doc(db, USERS_COLLECTION, userId);
         const userSnap = await getDoc(userRef);
 
         if (userSnap.exists()) {
             const data = userSnap.data();
-            return data.globalContextSources || null;
+            return (data.globalContextSources as ContextSource[]) || null;
         } else {
             return null;
         }

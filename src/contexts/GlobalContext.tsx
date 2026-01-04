@@ -1,17 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
-import { getPyramid } from '../services/pyramidService';
-import { getProductDefinition } from '../services/productDefinitionService';
-import { getContextDocument } from '../services/contextDocumentService';
-import { getTechnicalArchitecture } from '../services/technicalArchitectureService';
-import { getTechnicalTask, generateMarkdown } from '../services/technicalTaskService';
+import { fetchContextData, formatContextDataForAI } from '../services/contextAdapter';
 import { getUserGlobalContext, saveUserGlobalContext } from '../services/userSettingsService';
-
-interface ContextSource {
-    type: 'pyramid' | 'productDefinition' | 'contextDocument' | 'technicalArchitecture' | 'technicalTask';
-    id: string;
-    title: string;
-}
+import { ContextSource } from '../types';
 
 interface GlobalContextType {
     selectedSources: ContextSource[];
@@ -89,84 +80,32 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
     }
 
     setIsContextLoading(true);
-    let contextText = "";
-
+    
     try {
-      for (const source of sources) {
-        try {
-          if (source.type === 'pyramid') {
-            const p = await getPyramid(source.id);
-            if (p) {
-                contextText += `\n--- PYRAMID: ${p.title} ---\n`;
-                // p.context might be null, check types
-                contextText += `Context: ${p.context || 'N/A'}\n`;
-                if (p.blocks) {
-                    const rootBlock = Object.values(p.blocks).find(b => b.type === 'solution'); // 'solution' type check
-                    if (rootBlock) contextText += `Proposed Solution: ${rootBlock.content}\n`;
-                }
-            }
-          } else if (source.type === 'productDefinition') {
-            const pd = await getProductDefinition(source.id);
-            if (pd) {
-                contextText += `\n--- PRODUCT DEFINITION: ${pd.title} ---\n`;
-                
-                // Format the product definition tree structure
-                if (pd.data && pd.data['root']) {
-                  const formatNode = (nodeId: string, depth = 0): string => {
-                    const node = pd.data[nodeId];
-                    if (!node) return "";
-                    
-                    const indent = "  ".repeat(depth);
-                    let text = `${indent}- ${node.label}`;
-                    if (node.description) {
-                       text += `: ${node.description}`;
-                    }
-                    text += "\n";
-                    
-                    if (node.children) {
-                      node.children.forEach((childId: string) => {
-                        text += formatNode(childId, depth + 1);
-                      });
-                    }
-                    return text;
-                  };
-                  
-                  contextText += formatNode('root');
-                } else {
-                   contextText += JSON.stringify(pd.data, null, 2);
-                }
-            }
-          } else if (source.type === 'technicalArchitecture') {
-            const ta = await getTechnicalArchitecture(source.id);
-            if (ta) {
-                contextText += `\n--- TECHNICAL ARCHITECTURE: ${ta.title} ---\n`;
-                // Add key sections to context
-                contextText += `Architecture Type: ${ta.system_architecture.main.architecture_type}\n`;
-                contextText += `Core Principles: ${ta.system_architecture.main.core_principles.join(', ')}\n`;
-                contextText += `Tech Stack: ${ta.technology_stack.main.frontend.framework}, ${ta.technology_stack.main.backend.runtime}, ${ta.technology_stack.main.backend.database}\n`;
-                contextText += JSON.stringify(ta.system_architecture, null, 2);
-            }
-          } else if (source.type === 'technicalTask') {
-            const t = await getTechnicalTask(source.id);
-            if (t) {
-                contextText += `\n--- TECHNICAL TASK: ${t.title} ---\n`;
-                contextText += generateMarkdown(t);
-            }
-          } else if (source.type === 'contextDocument') {
-             const doc = await getContextDocument(source.id);
-             if (doc) {
-                contextText += `\n--- DOCUMENT: ${doc.title} ---\n`;
-                contextText += `${doc.content}\n`;
-             }
-          }
-        } catch (err) {
-            console.error(`Failed to fetch context from source ${source.title}`, err);
-            contextText += `\n[Error fetching content from ${source.title}]\n`;
+        // Fetch all data in parallel
+        const results = await Promise.all(sources.map(s => fetchContextData(s)));
+
+        let contextText = "### GLOBAL CONTEXT SUMMARY\nThe following items are included in this context:\n";
+        
+        // Add Table of Contents with REAL titles from the fetch result
+        results.forEach((r, index) => {
+            contextText += `${index + 1}. [${r.type}] ${r.title}`;
+            if (r.error) contextText += " (Error Loading)";
+            contextText += "\n";
+        });
+        
+        contextText += "\n### DETAILED CONTENT\n\n";
+
+        // Add formatted content
+        for (const result of results) {
+            contextText += formatContextDataForAI(result);
+            contextText += "\n";
         }
-      }
-      setAggregatedContext(contextText);
+
+        setAggregatedContext(contextText);
     } catch (error) {
         console.error("Error aggregating context", error);
+        setAggregatedContext("Error loading global context data.");
     } finally {
         setIsContextLoading(false);
     }

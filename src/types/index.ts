@@ -4,7 +4,8 @@ export type { Block };
 
 export interface ContextSource {
   id: string;
-  type: 'contextDocument' | 'productDefinition' | 'pyramid' | 'technicalArchitecture' | 'technicalTask';
+  type: 'contextDocument' | 'productDefinition' | 'pyramid' | 'technicalArchitecture' | 'technicalTask' | 'uiUxArchitecture';
+  title?: string;
 }
 
 export interface Pyramid {

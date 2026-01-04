@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Box, Flex, Text, Button, IconButton, TextField, TextArea, DropdownMenu } from '@radix-ui/themes';
+import { Box, Flex, Text, Button, IconButton, TextField, DropdownMenu } from '@radix-ui/themes';
 import { ArrowLeft, Save, Download, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getContextDocument, updateContextDocument } from '../services/contextDocumentService';
@@ -61,7 +61,7 @@ const ContextDocumentEditor: React.FC = () => {
   }
 
   return (
-    <Flex direction="column" className="h-full bg-white">
+    <Flex direction="column" className="h-full flex-grow bg-white">
       <Flex 
         justify="between" 
         align="center" 
@@ -105,29 +105,17 @@ const ContextDocumentEditor: React.FC = () => {
         </Flex>
       </Flex>
 
-      <Container size="3" className="flex-grow p-8 overflow-y-auto">
-        <Box className="h-full bg-white">
-            <TextArea 
+      <Box className="flex-grow flex flex-col p-8 overflow-hidden bg-gray-50">
+        <div className="flex-grow flex flex-col h-full max-w-5xl mx-auto w-full">
+            <textarea 
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Write your context document here..."
-                size="3"
-                style={{ 
-                    minHeight: '600px', 
-                    height: '100%',
-                    padding: '20px',
-                    fontSize: '16px',
-                    lineHeight: '1.6',
-                    resize: 'none',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    outline: 'none',
-                    boxShadow: 'none'
-                }}
-                className="w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="flex-grow w-full h-full p-6 text-base leading-relaxed bg-white border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                style={{ minHeight: '100%' }}
             />
-        </Box>
-      </Container>
+        </div>
+      </Box>
     </Flex>
   );
 };

@@ -38,8 +38,7 @@ const Dashboard: React.FC = () => {
     <Box className="h-full bg-gray-50">
       <Container size="3" className="p-4 pt-10">
         <Box className="mb-8 text-center">
-            <Heading size="8" mb="2" className="text-gray-900">Context Platform</Heading>
-            <Text size="4" color="gray">Select a tool to start working on your project.</Text>
+
         </Box>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
