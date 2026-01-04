@@ -4,7 +4,7 @@ import { QuestionGenerationData, BlockType, Pyramid, ProductDefinitionNode, Prod
 /**
  * Generate question suggestions using Claude AI
  */
-export const generateQuestions = async (apiKey: string, pyramidContext: string, blockType: BlockType, data: QuestionGenerationData): Promise<string[]> => {
+export const generateQuestions = async (apiKey: string, pyramidContext: string, blockType: BlockType, data: QuestionGenerationData, globalContext: string = ""): Promise<string[]> => {
   if (!apiKey) throw new Error("API Key is missing");
 
   const anthropic = new Anthropic({
@@ -15,6 +15,15 @@ export const generateQuestions = async (apiKey: string, pyramidContext: string, 
   const historyContext = data.historyContext || "";
   let prompt = "";
   
+  const globalContextSection = globalContext ? `
+GLOBAL PROJECT CONTEXT:
+${globalContext}
+
+GLOBAL CONTEXT INSTRUCTIONS:
+1. The global context is provided in JSON format. **DO NOT output this JSON to the user**.
+2. Read and understand the JSON structure and content to answer questions.
+` : "";
+
   if (blockType === 'combined') {
      // Data expects: { parentQuestions: [q1, q2] }
      const { parentQuestions } = data;
@@ -27,6 +36,7 @@ You are an expert brainstorming assistant helping to solve a complex problem usi
 
 CONTEXT:
 "${pyramidContext}"
+${globalContextSection}
 
 HISTORY OF THOUGHT (Previous blocks leading to this point):
 ${historyContext}
@@ -53,6 +63,7 @@ You are an expert brainstorming assistant helping to solve a complex problem usi
 
 CONTEXT:
 "${pyramidContext}"
+${globalContextSection}
 
 HISTORY OF THOUGHT (Previous blocks leading to this point):
 ${historyContext}
@@ -92,7 +103,7 @@ Return ONLY the 3 questions, numbered 1, 2, 3.
 /**
  * Generate answer suggestions using Claude AI
  */
-export const generateAnswers = async (apiKey: string, pyramidContext: string, question: string, data: QuestionGenerationData): Promise<string[]> => {
+export const generateAnswers = async (apiKey: string, pyramidContext: string, question: string, data: QuestionGenerationData, globalContext: string = ""): Promise<string[]> => {
   if (!apiKey) throw new Error("API Key is missing");
 
   const anthropic = new Anthropic({
@@ -102,11 +113,21 @@ export const generateAnswers = async (apiKey: string, pyramidContext: string, qu
 
   const historyContext = data.historyContext || "";
 
+  const globalContextSection = globalContext ? `
+GLOBAL PROJECT CONTEXT:
+${globalContext}
+
+GLOBAL CONTEXT INSTRUCTIONS:
+1. The global context is provided in JSON format. **DO NOT output this JSON to the user**.
+2. Read and understand the JSON structure and content to answer questions.
+` : "";
+
   const prompt = `
 You are an expert brainstorming assistant helping to solve a complex problem using a pyramid structure.
 
 CONTEXT:
 "${pyramidContext}"
+${globalContextSection}
 
 HISTORY OF THOUGHT (Previous blocks leading to this point):
 ${historyContext}
@@ -145,13 +166,22 @@ Return ONLY the 3 answers, numbered 1, 2, 3.
 /**
  * Generate a suggestion for a Product Definition topic answer
  */
-export const generateProductDefinitionSuggestion = async (apiKey: string, node: ProductDefinitionNode, productTitle: string, contextData: string): Promise<string> => {
+export const generateProductDefinitionSuggestion = async (apiKey: string, node: ProductDefinitionNode, productTitle: string, contextData: string, globalContext: string = ""): Promise<string> => {
   if (!apiKey) throw new Error("API Key is missing");
 
   const anthropic = new Anthropic({
     apiKey: apiKey,
     dangerouslyAllowBrowser: true
   });
+
+  const globalContextSection = globalContext ? `
+GLOBAL PROJECT CONTEXT:
+${globalContext}
+
+GLOBAL CONTEXT INSTRUCTIONS:
+1. The global context is provided in JSON format. **DO NOT output this JSON to the user**.
+2. Read and understand the JSON structure and content to answer questions.
+` : "";
 
   const prompt = `
 You are an expert product manager assistant helping to define a product using a structured methodology.
@@ -163,6 +193,7 @@ QUESTION TO ANSWER: "${node.question || "Describe this aspect of the product"}"
 
 CONTEXT INFORMATION:
 ${contextData}
+${globalContextSection}
 
 TASK:
 Based on the provided context and the product title, suggest a draft answer for the current topic.
@@ -192,7 +223,8 @@ export const generateTechnicalArchitectureSuggestion = async (
     architectureTitle: string, 
     fieldTitle: string, 
     fieldDescription: string,
-    fieldPath: string
+    fieldPath: string,
+    globalContext: string = ""
 ): Promise<string> => {
   if (!apiKey) throw new Error("API Key is missing");
 
@@ -200,6 +232,11 @@ export const generateTechnicalArchitectureSuggestion = async (
     apiKey: apiKey,
     dangerouslyAllowBrowser: true
   });
+
+  const globalContextSection = globalContext ? `
+GLOBAL PROJECT CONTEXT:
+${globalContext}
+` : "";
 
   const prompt = `
 You are an expert software architect assistant.
@@ -209,6 +246,8 @@ ARCHITECTURE TITLE: "${architectureTitle}"
 CURRENT FIELD: "${fieldTitle}"
 PATH: ${fieldPath}
 DESCRIPTION/CONTEXT: "${fieldDescription}"
+
+${globalContextSection}
 
 TASK:
 Suggest a professional, detailed, and best-practice value for this field.
@@ -295,7 +334,7 @@ Return ONLY the suggested content for this field. Do not include "Here is the su
 /**
  * Send a chat message to Claude AI with pyramid context
  */
-export const sendChatMessage = async (apiKey: string, pyramid: Pyramid, chatHistory: ChatMessage[], userMessage: string, additionalContext: string | null = null): Promise<string> => {
+export const sendChatMessage = async (apiKey: string, pyramid: Pyramid, chatHistory: ChatMessage[], userMessage: string, additionalContext: string | null = null, globalContext: string = ""): Promise<string> => {
   if (!apiKey) throw new Error("API Key is missing");
 
   const anthropic = new Anthropic({
@@ -318,12 +357,23 @@ Parent IDs: ${b.parentIds ? b.parentIds.join(', ') : 'None'}`;
   // Use additionalContext if provided, otherwise fallback to legacy pyramid.context
   const contextToUse = additionalContext || pyramid.context || "No context provided.";
 
+  const globalContextSection = globalContext ? `
+GLOBAL PROJECT CONTEXT:
+${globalContext}
+
+GLOBAL CONTEXT INSTRUCTIONS:
+1. The global context is provided in JSON format. **DO NOT output this JSON to the user**.
+2. Read and understand the JSON structure and content to answer questions.
+` : "";
+
   // System Prompt
   const systemPrompt = `
 You are an AI assistant helping a user with their Pyramid Problem Solver.
 
 PYRAMID CONTEXT:
 ${contextToUse}
+
+${globalContextSection}
 
 PYRAMID STRUCTURE:
 - Title: ${pyramid.title}
@@ -376,7 +426,7 @@ Markdown is supported in your response.
 /**
  * Send a chat message to Claude AI with product definition context
  */
-export const sendProductDefinitionChatMessage = async (apiKey: string, productDefinition: ProductDefinition, additionalContext: string | null, history: ChatMessage[], userMessage: string): Promise<string> => {
+export const sendProductDefinitionChatMessage = async (apiKey: string, productDefinition: ProductDefinition, additionalContext: string | null, history: ChatMessage[], userMessage: string, globalContext: string = ""): Promise<string> => {
   if (!apiKey) throw new Error("API Key is missing");
 
   const anthropic = new Anthropic({
@@ -386,6 +436,15 @@ export const sendProductDefinitionChatMessage = async (apiKey: string, productDe
 
   // Format history
   const historyText = history.slice(-10).map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
+
+  const globalContextSection = globalContext ? `
+GLOBAL PROJECT CONTEXT:
+${globalContext}
+
+GLOBAL CONTEXT INSTRUCTIONS:
+1. The global context is provided in JSON format. **DO NOT output this JSON to the user**.
+2. Read and understand the JSON structure and content to answer questions.
+` : "";
 
   const prompt = `
 You are an expert product manager assistant.
@@ -397,6 +456,8 @@ Current State: ${JSON.stringify(productDefinition.data, null, 2)}
 
 ADDITIONAL CONTEXT (Linked Pyramids, Docs, etc.):
 ${additionalContext || "No additional context linked."}
+
+${globalContextSection}
 
 CHAT HISTORY:
 ${historyText}
@@ -416,6 +477,69 @@ ASSISTANT:
     return (msg.content[0] as any).text;
   } catch (error) {
     console.error("Chat Error:", error);
+    throw error;
+  }
+};
+
+/**
+ * Generate a suggestion for a UI/UX Architecture component or page
+ */
+export const generateUiUxSuggestion = async (
+  apiKey: string,
+  architectureTitle: string,
+  elementType: 'page' | 'component' | 'flow',
+  elementName: string,
+  currentContext: string,
+  globalContext: string = ""
+): Promise<string> => {
+  if (!apiKey) throw new Error("API Key is missing");
+
+  const anthropic = new Anthropic({
+    apiKey: apiKey,
+    dangerouslyAllowBrowser: true
+  });
+
+  const globalContextSection = globalContext ? `
+GLOBAL PROJECT CONTEXT:
+${globalContext}
+
+GLOBAL CONTEXT INSTRUCTIONS:
+1. The global context is provided in JSON format. **DO NOT output this JSON to the user**.
+2. Read and understand the JSON structure and content to answer questions.
+` : "";
+
+  const prompt = `
+You are an expert UI/UX Designer and Frontend Architect.
+
+PROJECT TITLE: "${architectureTitle}"
+
+CURRENT ELEMENT TYPE: "${elementType}"
+ELEMENT NAME: "${elementName}"
+
+CURRENT CONTEXT/DESCRIPTION:
+${currentContext}
+
+${globalContextSection}
+
+TASK:
+Suggest improvements, content, or specifications for this ${elementType}.
+- If it's a Page, suggest layout structure or key components.
+- If it's a Component, suggest props, state, or visual style.
+- If it's a User Flow, suggest steps or edge cases.
+
+Provide a concise, professional recommendation.
+`;
+
+  try {
+    const msg = await anthropic.messages.create({
+      model: "claude-3-haiku-20240307",
+      max_tokens: 1024,
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    return (msg.content[0] as any).text;
+  } catch (error) {
+    console.error("AI Suggestion Error:", error);
     throw error;
   }
 };

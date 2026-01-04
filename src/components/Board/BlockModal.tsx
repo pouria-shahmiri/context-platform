@@ -131,14 +131,18 @@ Answer: ${h.answer || "N/A"}
             : (parents?.[0]?.question || parents?.[0]?.content || "Start of the pyramid");
 
         const historyContext = buildHistoryContext();
-        // Combine local pyramid context with global context
-        const fullContext = (pyramidContext || "General Problem Solving") + "\n\n" + (globalContext || "");
-
-        const result = await generateQuestions(apiKey, fullContext, 'regular', {
-            parentQuestion: effectiveParentQuestion,
-            currentAnswer: answer || "No answer provided yet",
-            historyContext
-        });
+        
+        const result = await generateQuestions(
+            apiKey, 
+            pyramidContext || "General Problem Solving", 
+            'regular', 
+            {
+                parentQuestion: effectiveParentQuestion,
+                currentAnswer: answer || "No answer provided yet",
+                historyContext
+            },
+            globalContext
+        );
         setSuggestions(result);
     } catch (error: any) {
         console.error(error);
@@ -163,13 +167,17 @@ Answer: ${h.answer || "N/A"}
     try {
         const parentQuestions = parents.map(p => p.question || p.content || "");
         const historyContext = buildHistoryContext();
-        // Combine local pyramid context with global context
-        const fullContext = (pyramidContext || "General Problem Solving") + "\n\n" + (globalContext || "");
         
-        const result = await generateQuestions(apiKey, fullContext, 'combined', {
-            parentQuestions,
-            historyContext
-        });
+        const result = await generateQuestions(
+            apiKey, 
+            pyramidContext || "General Problem Solving", 
+            'combined', 
+            {
+                parentQuestions,
+                historyContext
+            },
+            globalContext
+        );
         setSuggestions(result);
     } catch (error: any) {
         console.error(error);
@@ -200,10 +208,14 @@ Answer: ${h.answer || "N/A"}
         }
 
         const historyContext = buildHistoryContext();
-        // Combine local pyramid context with global context
-        const fullContext = (pyramidContext || "General Problem Solving") + "\n\n" + (globalContext || "");
 
-        const result = await generateAnswers(apiKey, fullContext, promptQuestion, historyContext);
+        const result = await generateAnswers(
+            apiKey, 
+            pyramidContext || "General Problem Solving", 
+            promptQuestion, 
+            { historyContext },
+            globalContext
+        );
         setSuggestions(result);
     } catch (error: any) {
         console.error(error);

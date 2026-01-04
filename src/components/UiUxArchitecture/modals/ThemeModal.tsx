@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, Button, Flex, Text, TextField, Tabs, Box, Grid, Heading, TextArea } from '@radix-ui/themes';
 import { ThemeSpecification } from '../../../types/uiUxArchitecture';
+import { AiRecommendationButton } from '../../Common/AiRecommendationButton';
+import { generateUiUxSuggestion } from '../../../services/anthropic';
 
 interface ThemeModalProps {
   open: boolean;

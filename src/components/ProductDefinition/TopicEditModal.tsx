@@ -41,34 +41,6 @@ const TopicEditModal: React.FC<TopicEditModalProps> = ({
     }
   };
 
-  const handleAiSuggest = async () => {
-    if (!apiKey) {
-      alert("Please set your API Key in Settings to use AI features.");
-      return;
-    }
-    
-    if (!node) return;
-
-    setIsGenerating(true);
-    try {
-      // Combine local context with global context
-      const fullContext = (contextData || "") + "\n\n" + (globalContext || "");
-      
-      const suggestion = await generateProductDefinitionSuggestion(
-        apiKey,
-        node,
-        productTitle,
-        fullContext.trim() || "No external context provided."
-      );
-      setDescription(prev => prev ? `${prev}\n\n--- AI Suggestion ---\n${suggestion}` : suggestion);
-    } catch (error) {
-      console.error("Failed to generate suggestion", error);
-      alert("Failed to generate suggestion. Please try again.");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
   return (
     <Dialog.Root open={isOpen} onOpenChange={onClose}>
       <Dialog.Content style={{ maxWidth: 700 }}>

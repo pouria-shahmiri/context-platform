@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, Flex, Text, TextArea, Button, Box } from '@radix-ui/themes';
 import { Wand2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useGlobalContext } from '../../contexts/GlobalContext';
 import { generateTechnicalArchitectureSuggestion } from '../../services/anthropic';
 import { TechnicalArchitecture } from '../../types';
 
@@ -31,6 +32,7 @@ const FieldEditModal: React.FC<FieldEditModalProps> = ({
   const [textValue, setTextValue] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const { apiKey } = useAuth();
+  const { aggregatedContext: globalContext } = useGlobalContext();
 
   useEffect(() => {
     if (isOpen) {
@@ -71,36 +73,6 @@ const FieldEditModal: React.FC<FieldEditModalProps> = ({
 
     onSave(parsedValue);
     onClose();
-  };
-
-  const handleAiSuggest = async () => {
-    if (!apiKey) {
-      alert("Please set your API Key in Settings to use AI features.");
-      return;
-    }
-
-    setIsGenerating(true);
-    try {
-      const suggestion = await generateTechnicalArchitectureSuggestion(
-        apiKey,
-        architectureTitle,
-        title,
-        description || "",
-        fieldPath.join(' > ')
-      );
-      
-      // If the field is a list or map, we might want to append or replace. 
-      // For now, let's append with a separator if there is existing content, or just replace if it's a short string.
-      setTextValue(prev => {
-          if (!prev.trim()) return suggestion;
-          return `${prev}\n\n${suggestion}`;
-      });
-    } catch (error) {
-      console.error("Failed to generate suggestion", error);
-      alert("Failed to generate suggestion. Please try again.");
-    } finally {
-      setIsGenerating(false);
-    }
   };
 
   return (

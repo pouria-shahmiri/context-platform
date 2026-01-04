@@ -133,7 +133,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
 
       // 3. Get AI Response
       let response: string = "";
-      const combinedContext = (additionalContext || "") + "\n\n" + (globalContext || "");
+      const contextToUse = additionalContext || "";
 
       // Create a simplified message history for the AI service
       const historyForAI = messages.map(m => ({ role: m.role, content: m.content }));
@@ -143,14 +143,22 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         const res = await sendProductDefinitionChatMessage(
             apiKey, 
             productDefinition, 
-            combinedContext, 
+            contextToUse, 
             historyForAI, 
-            userMsg
+            userMsg,
+            globalContext || ""
         );
         response = res || "No response";
       } else if (parentCollection === 'pyramids' && pyramid) {
         // Use Standard Pyramid Chat Mode (Legacy/Specific)
-        const res = await sendChatMessage(apiKey, pyramid, historyForAI, userMsg, combinedContext, parentCollection);
+        const res = await sendChatMessage(
+            apiKey, 
+            pyramid, 
+            historyForAI, 
+            userMsg, 
+            contextToUse, 
+            globalContext || ""
+        );
         response = res || "No response";
       } else {
         // Use Global Chat Mode

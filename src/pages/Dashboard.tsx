@@ -37,9 +37,9 @@ const Dashboard: React.FC = () => {
   return (
     <Box className="h-full bg-gray-50">
       <Container size="3" className="p-4 pt-10">
-        <Box className="mb-8 text-center">
+        {/* <Box className="mb-8 text-center">
 
-        </Box>
+        </Box> */}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             <ToolCard 

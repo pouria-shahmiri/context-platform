@@ -6,6 +6,7 @@ import { Download, Save, Sparkles } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGlobalContext } from '../../contexts/GlobalContext';
 import { generateTechnicalTaskSuggestion } from '../../services/anthropic';
+import { AiRecommendationButton } from '../Common/AiRecommendationButton';
 
 interface EditorProps {
     task: TechnicalTask;

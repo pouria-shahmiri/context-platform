@@ -92,7 +92,21 @@ export const ComponentModal: React.FC<ComponentModalProps> = ({ open, onOpenChan
           </Box>
 
           <Box>
-            <Text size="2" mb="1">Description</Text>
+            <Flex justify="between" align="center" mb="1">
+              <Text size="2">Description</Text>
+              <AiRecommendationButton
+                onGenerate={(apiKey, globalContext) => generateUiUxSuggestion(
+                  apiKey,
+                  "UI/UX Architecture", // We might want a real title here, but this is fine for now
+                  'component',
+                  localComponent.main.name || "Unnamed Component",
+                  `Category: ${localComponent.main.category}\nType: ${localComponent.type}`,
+                  globalContext
+                )}
+                onSuccess={(result) => handleChange(['main', 'description'], result)}
+                label="AI Suggest"
+              />
+            </Flex>
             <TextArea 
               value={localComponent.main.description || ''} 
               onChange={e => handleChange(['main', 'description'], e.target.value)}
