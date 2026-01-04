@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Box, Flex, Heading, TextField, Select, Text, Dialog, Button } from '@radix-ui/themes';
 import { Search } from 'lucide-react';
-import Navbar from '../components/Navbar/Navbar';
 import PyramidList from '../components/Dashboard/PyramidList';
 import CreatePyramidModal from '../components/Dashboard/CreatePyramidModal';
 import { getUserPyramids, deletePyramid, duplicatePyramid, renamePyramid } from '../services/pyramidService';
@@ -94,7 +93,6 @@ const PyramidsPage: React.FC = () => {
 
   return (
     <Box className="min-h-screen bg-background">
-      <Navbar />
       <Container size="4" className="p-4">
         {/* Header Section */}
         <Flex justify="between" align="center" className="mb-8 mt-6">
