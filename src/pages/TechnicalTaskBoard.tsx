@@ -9,6 +9,7 @@ import {
     createPipeline, 
     deletePipeline, 
     updatePipeline,
+    deleteTechnicalTask,
     batchUpdatePipelines,
     batchUpdateTasks
 } from '../services/technicalTaskService';
@@ -127,6 +128,15 @@ export const TechnicalTaskBoard: React.FC = () => {
         setRenameTitle('');
     };
 
+    const handleDeleteTask = async (taskId: string) => {
+        const success = await deleteTechnicalTask(taskId);
+        if (success) {
+            setTasks(tasks.filter(t => t.id !== taskId));
+        } else {
+            alert("Failed to delete task. Please try again.");
+        }
+    };
+
     const onDragEnd = (result: DropResult) => {
         const { destination, source, draggableId, type } = result;
 
@@ -163,7 +173,10 @@ export const TechnicalTaskBoard: React.FC = () => {
                 
                 const otherTasks = tasks.filter(t => t.pipelineId !== startPipelineId);
                 setTasks([...otherTasks, ...updatedPipelineTasks]);
-                batchUpdateTasks(updatedPipelineTasks);
+                batchUpdateTasks(updatedPipelineTasks).catch(err => {
+                    console.error("Failed to save task order:", err);
+                    alert("Failed to save changes. Please refresh.");
+                });
             } else {
                 const startTasks = getSortedTasks(startPipelineId);
                 const finishTasks = getSortedTasks(finishPipelineId);
@@ -178,7 +191,10 @@ export const TechnicalTaskBoard: React.FC = () => {
 
                 const otherTasks = tasks.filter(t => t.pipelineId !== startPipelineId && t.pipelineId !== finishPipelineId);
                 setTasks([...otherTasks, ...updatedStartTasks, ...updatedFinishTasks]);
-                batchUpdateTasks([...updatedStartTasks, ...updatedFinishTasks]);
+                batchUpdateTasks([...updatedStartTasks, ...updatedFinishTasks]).catch(err => {
+                    console.error("Failed to save task order:", err);
+                    alert("Failed to save changes. Please refresh.");
+                });
             }
         }
     };
@@ -346,7 +362,7 @@ export const TechnicalTaskBoard: React.FC = () => {
                                                                                     {...provided.dragHandleProps}
                                                                                     style={{ ...provided.draggableProps.style, marginBottom: '8px' }}
                                                                                 >
-                                                                                    <TaskCard task={task} />
+                                                                                    <TaskCard task={task} onDelete={handleDeleteTask} />
                                                                                 </div>
                                                                             )}
                                                                         </Draggable>

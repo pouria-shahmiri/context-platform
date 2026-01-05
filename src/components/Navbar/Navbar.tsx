@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { Flex, Text, Button, Avatar, DropdownMenu, Badge } from '@radix-ui/themes';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGlobalContext } from '../../contexts/GlobalContext';
-import { LogOut, LayoutGrid, Globe, Bot } from 'lucide-react';
+import { LogOut, LayoutGrid, Globe, Bot, Download } from 'lucide-react';
 import APIKeyModal from './APIKeyModal';
 import ContextModal from './ContextModal';
 import ContextSelectorModal from '../ProductDefinition/ContextSelectorModal';
 import ChatPanel from '../Chat/ChatPanel';
 import { Link } from 'react-router-dom';
+import { exportWorkspaceToJson } from '../../services/exportService';
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -19,6 +20,7 @@ const Navbar: React.FC = () => {
   } = useGlobalContext();
   
   const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
 
   return (
     <div className="sticky top-0 z-50 px-6 py-3 bg-white/80 backdrop-blur-md shadow-md">
@@ -53,6 +55,26 @@ const Navbar: React.FC = () => {
           <Button variant="ghost" color="gray" onClick={() => setIsChatOpen(true)} className="cursor-pointer hover:bg-gray-100 transition-colors">
             <Bot size={16} className="text-gray-400" />
             AI Chat
+          </Button>
+
+          {/* Export Workspace */}
+          <Button 
+            variant="ghost" 
+            color="gray" 
+            disabled={isExporting} 
+            onClick={async () => {
+              if (!user?.uid) return;
+              try {
+                setIsExporting(true);
+                await exportWorkspaceToJson(user.uid, { displayName: user.displayName, email: user.email });
+              } finally {
+                setIsExporting(false);
+              }
+            }} 
+            className="cursor-pointer hover:bg-gray-100 transition-colors"
+          >
+            <Download size={16} className="text-gray-400" />
+            {isExporting ? 'Exporting...' : 'Export Workspace'}
           </Button>
 
           {/* Global Context Modal */}

@@ -1,6 +1,12 @@
 import * as XLSX from 'xlsx';
 import { Pyramid, ContextDocument, ProductDefinition, TechnicalArchitecture } from '../types';
 import { generateMarkdown as generateTechnicalArchitectureMarkdown } from './technicalArchitectureService';
+import { getUserPyramids } from './pyramidService';
+import { getUserProductDefinitions } from './productDefinitionService';
+import { getUserContextDocuments } from './contextDocumentService';
+import { getUserTechnicalArchitectures } from './technicalArchitectureService';
+import { getTechnicalTasks, getPipelines } from './technicalTaskService';
+import { getUserUiUxArchitectures } from './uiUxArchitectureService';
 
 
 // ==========================================
@@ -385,4 +391,59 @@ export const exportTechnicalArchitectureToMarkdown = (arch: TechnicalArchitectur
   md += `\n`;
 
   downloadFile(md, getSafeFilename(arch.title, 'architecture.md'), 'text/markdown');
+};
+
+export const exportWorkspaceToJson = async (
+  userId: string,
+  userInfo?: { displayName?: string | null; email?: string | null }
+) => {
+  if (!userId) return;
+
+  const [
+    pyramids,
+    productDefinitions,
+    contextDocuments,
+    technicalArchitectures,
+    technicalTasks,
+    pipelines,
+    uiUxArchitectures
+  ] = await Promise.all([
+    getUserPyramids(userId),
+    getUserProductDefinitions(userId),
+    getUserContextDocuments(userId),
+    getUserTechnicalArchitectures(userId),
+    getTechnicalTasks(userId),
+    getPipelines(userId),
+    getUserUiUxArchitectures(userId)
+  ]);
+
+  const payload = {
+    meta: {
+      exportedAt: new Date().toISOString(),
+      userId,
+      user: {
+        displayName: userInfo?.displayName || null,
+        email: userInfo?.email || null
+      }
+    },
+    pyramids,
+    productDefinitions,
+    contextDocuments,
+    technicalArchitectures,
+    technicalTasks: {
+      pipelines,
+      tasks: technicalTasks
+    },
+    uiUxArchitectures
+  };
+
+  const filenameBase =
+    userInfo?.displayName?.replace(/[^a-z0-9]/gi, '_').toLowerCase() ||
+    'workspace';
+
+  downloadFile(
+    JSON.stringify(payload, null, 2),
+    `${filenameBase}_workspace.json`,
+    'application/json'
+  );
 };

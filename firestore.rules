@@ -78,6 +78,12 @@ rules_version = '2';
       allow read, update, delete: if isOwner(resource.data.userId);
     }
 
+    // Global Tasks collection
+    match /globalTasks/{taskId} {
+      allow create: if isOwner(request.resource.data.userId);
+      allow read, update, delete: if isOwner(resource.data.userId);
+    }
+
     // Pipelines collection
     match /pipelines/{pipelineId} {
       allow create: if isOwner(request.resource.data.userId);

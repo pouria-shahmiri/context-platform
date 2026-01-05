@@ -59,8 +59,9 @@ export const batchUpdateTasks = async (tasks: TechnicalTask[]) => {
         
         const updates = { pipelineId: t.pipelineId, order: t.order };
         batch.update(ref, updates);
-        // We assume global task exists if technical task exists
-        batch.update(globalRef, updates);
+        // Use set with merge to avoid failing if global task doesn't exist
+        // Must include userId to satisfy security rules if creating a new document
+        batch.set(globalRef, { ...updates, userId: t.userId }, { merge: true });
     });
     await batch.commit();
 };
@@ -211,11 +212,9 @@ export const updateTechnicalTask = async (taskId: string, updates: Partial<Techn
     const updateData = { ...updates, updatedAt: new Date() };
 
     await updateDoc(docRef, updateData);
-    // Sync to Global Tasks
-    await updateDoc(globalDocRef, updateData).catch(err => {
-        console.warn(`Failed to update global task ${taskId}, it might not exist yet.`, err);
-        // If it doesn't exist, we might want to create it, but updateDoc fails if not exists.
-        // For now, logging is enough, or we could use setDoc with merge: true if we were sure.
+    // Sync to Global Tasks - use set with merge to ensure it exists
+    await setDoc(globalDocRef, updateData, { merge: true }).catch(err => {
+        console.warn(`Failed to sync global task ${taskId}`, err);
     });
 };
 
