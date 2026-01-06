@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Flex, Text, Button, Avatar, DropdownMenu, Badge } from '@radix-ui/themes';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGlobalContext } from '../../contexts/GlobalContext';
-import { LogOut, LayoutGrid, Globe, Bot, Download } from 'lucide-react';
+import { LogOut, LayoutGrid, Globe, Bot, Download, Lock } from 'lucide-react';
 import APIKeyModal from './APIKeyModal';
+import SetPasswordModal from './SetPasswordModal';
 import ContextModal from './ContextModal';
 import ContextSelectorModal from '../ProductDefinition/ContextSelectorModal';
 import ChatPanel from '../Chat/ChatPanel';
@@ -21,6 +22,7 @@ const Navbar: React.FC = () => {
   
   const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState<boolean>(false);
 
   return (
     <div className="sticky top-0 z-50 px-6 py-3 bg-white/80 backdrop-blur-md shadow-md">
@@ -86,6 +88,11 @@ const Navbar: React.FC = () => {
             currentDefinitionId={null} // Global context shouldn't exclude anything by default
           />
 
+          <SetPasswordModal 
+            isOpen={isPasswordModalOpen} 
+            onClose={() => setIsPasswordModalOpen(false)} 
+          />
+
           <APIKeyModal />
           
           <ContextModal />
@@ -115,6 +122,11 @@ const Navbar: React.FC = () => {
                 <br />
                 <Text size="1" color="gray">{user?.email}</Text>
               </DropdownMenu.Label>
+              <DropdownMenu.Separator />
+              <DropdownMenu.Item className="cursor-pointer" onClick={() => setIsPasswordModalOpen(true)}>
+                <Lock className="w-4 h-4 mr-2" />
+                Set Password
+              </DropdownMenu.Item>
               <DropdownMenu.Separator />
               <DropdownMenu.Item color="red" onClick={logout} className="cursor-pointer">
                 <LogOut className="w-4 h-4 mr-2" />
