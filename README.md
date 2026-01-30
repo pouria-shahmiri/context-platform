@@ -1,128 +1,193 @@
-# Pyramid Solver
-
-Pyramid Solver is a powerful structured problem-solving tool designed to help you break down complex problems, define products, and architect solutions using a pyramid structure. It leverages AI (Claude via Anthropic) to assist in brainstorming, question generation, and answer synthesis.
-
-## Features
-
--   **Pyramid Structured Thinking**: Break down problems into smaller, manageable questions and answers.
--   **AI-Powered Assistance**: Use Claude AI to generate questions, answers, and combine insights.
--   **Product Definition**: Structured approach to defining products with clear scope, risks, and requirements.
--   **Architecture Planning**: Tools for Technical and UI/UX architecture planning.
--   **Context Management**: Manage global context, documents, and directories to inform the AI.
--   **Real-time Collaboration**: Built on Firebase for real-time data synchronization.
-
-## Tech Stack
-
--   **Frontend**: React, Vite, TypeScript
--   **Styling**: Tailwind CSS, Radix UI
--   **Backend / Database**: Firebase (Authentication, Firestore, Hosting)
--   **AI**: Anthropic API (Claude)
--   **State Management**: Context API, Zustand
--   **Routing**: React Router
-
-## Prerequisites
-
-Before you begin, ensure you have the following installed:
-
--   [Node.js](https://nodejs.org/) (v16 or higher)
--   [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
--   A [Firebase](https://firebase.google.com/) project
--   An [Anthropic API Key](https://console.anthropic.com/) (for AI features)
-
-## Getting Started
-
-### 1. Clone the Repository
-
-```bash
-git clone <repository-url>
-cd pyramid-solver
+```text
+   ______            __           __     
+  / ____/___  ____  / /____  _  __/ /_    
+ / /   / __ \/ __ \/ __/ _ \| |/_/ __/    
+/ /___/ /_/ / / / / /_/  __/>  </ /_      
+\____/\____/_/ /_/\__/\___/_/|_|\__/      
+    ____  __      __  ____                
+   / __ \/ /___ _/ /_/ __/___  _________ ___ 
+  / /_/ / / __ `/ __/ /_/ __ \/ ___/ __ `__ \
+ / ____/ / /_/ / /_/ __/ /_/ / /  / / / / / /
+/_/   /_/\__,_/\__/_/  \____/_/  /_/ /_/ /_/ 
+                                             
 ```
 
-### 2. Install Dependencies
+> **The AI-Powered Workbench for Structured Thinking & Architecture Planning**
 
-```bash
-npm install
-# or
-yarn install
+---
+
+## 📖 Table of Contents
+
+- [Introduction](#-introduction)
+- [Key Features](#-key-features)
+- [Methodology](#-methodology)
+- [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
+- [Getting Started](#-getting-started)
+- [Configuration](#-configuration)
+- [Deployment](#-deployment)
+- [Contributing](#-contributing)
+
+---
+
+## 🧠 Introduction
+
+**Context Platform** is a specialized IDE for thought. It transforms the way you solve complex problems by combining the **Pyramid Principle** with **Generative AI**. Instead of staring at a blank page, you build structured logic trees, define product requirements, and map out technical architectures—all with Claude AI as your pair thinker.
+
+It is designed for:
+*   **Product Managers** defining scope and requirements.
+*   **Architects** planning system components and data flows.
+*   **Engineers** breaking down technical tasks.
+*   **Founders** organizing business strategy.
+
+---
+
+## ✨ Key Features
+
+| Feature | Description |
+| :--- | :--- |
+| **Thinking Pyramids** | Break down broad problems into specific, actionable questions using a visual tree structure. |
+| **AI Co-Pilot** | Integrated **Claude AI** helps generate sub-questions, answers, and summaries at every level of your thinking process. |
+| **Product Specs** | Dedicated editors for defining **Product Definitions**, scope, risks, and success metrics. |
+| **Architecture** | Visual tools for mapping **Technical Architectures** and **UI/UX Flows**. |
+| **Context Awareness** | Upload documents and define a "Global Context" so the AI understands your specific project domain. |
+| **Real-Time Sync** | Built on **Firebase**, enabling seamless synchronization across devices and users. |
+
+---
+
+## � Methodology
+
+The platform is built around the **Pyramid Principle**:
+
+1.  **Start with the Core Question**: What are you trying to solve?
+2.  **Group & Summarize**: Group related insights and summarize them upwards.
+3.  **MECE**: Ensure your breakdown is *Mutually Exclusive and Collectively Exhaustive*.
+
+```text
+       [ Main Problem ]
+           /      \
+      [Why?]      [How?]
+      /    \      /    \
+   [A]     [B]  [C]    [D]
 ```
 
-### 3. Environment Setup
+---
 
-This project uses Firebase for authentication and data storage. You need to set up your environment variables.
+## 🛠 Tech Stack
 
-1.  Copy the example environment file:
+**Frontend**
+*   ![React](https://img.shields.io/badge/-React-20232A?logo=react&logoColor=61DAFB) **React 18** - UI Library
+*   ![TypeScript](https://img.shields.io/badge/-TypeScript-007ACC?logo=typescript&logoColor=white) **TypeScript** - Type Safety
+*   ![Vite](https://img.shields.io/badge/-Vite-646CFF?logo=vite&logoColor=white) **Vite** - Build Tool
+*   ![Tailwind](https://img.shields.io/badge/-Tailwind-38B2AC?logo=tailwind-css&logoColor=white) **Tailwind CSS** - Styling
+*   ![Radix UI](https://img.shields.io/badge/-Radix%20UI-161618?logo=radix-ui&logoColor=white) **Radix UI** - Accessible Primitives
 
+**Backend & Services**
+*   ![Firebase](https://img.shields.io/badge/-Firebase-FFCA28?logo=firebase&logoColor=black) **Firebase** - Auth, Firestore, Hosting
+*   ![Anthropic](https://img.shields.io/badge/-Anthropic-d97757) **Anthropic API** - AI Intelligence (Claude models)
+
+---
+
+## � Project Structure
+
+Understanding the codebase layout will help you navigate faster:
+
+```text
+src/
+├── components/        # Reusable UI components (Buttons, Inputs, etc.)
+│   ├── ui/           # Generic UI elements (often from shadcn/ui)
+│   └── ...
+├── contexts/          # React Contexts (Auth, Global State)
+├── hooks/             # Custom React Hooks
+├── pages/             # Main Application Pages (Routes)
+│   ├── AiChatPage.tsx              # Chat interface
+│   ├── ContextDocumentsPage.tsx    # Knowledge base management
+│   ├── DiagramEditor.tsx           # Visual diagramming tool
+│   ├── ProductDefinitionEditor.tsx # Product spec editor
+│   ├── PyramidsPage.tsx            # The core Pyramid thinking tool
+│   └── ...
+├── services/          # API & Business Logic
+│   ├── anthropic.ts   # AI integration
+│   ├── firebase.ts    # Database connection
+│   └── ...
+├── types/             # TypeScript definitions
+└── App.tsx            # Main App component & Routing
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+*   **Node.js** (v16+)
+*   **Firebase Account** (for backend)
+*   **Anthropic API Key** (for AI features)
+
+### Installation
+
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/your-username/context-platform.git
+    cd context-platform
+    ```
+
+2.  **Install dependencies**
+    ```bash
+    npm install
+    ```
+
+3.  **Configure Environment**
+    Create a `.env` file in the root directory:
     ```bash
     cp .env.example .env
     ```
-
-2.  Open `.env` and fill in your Firebase configuration:
-
-    ```env
-    VITE_FIREBASE_API_KEY=your_api_key
-    VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
-    VITE_FIREBASE_PROJECT_ID=your_project_id
-    VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
-    VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-    VITE_FIREBASE_APP_ID=your_app_id
+    
+    Update `.env` with your credentials:
+    ```properties
+    VITE_FIREBASE_API_KEY=...
+    VITE_FIREBASE_AUTH_DOMAIN=...
+    VITE_FIREBASE_PROJECT_ID=...
+    # ... other firebase config
     ```
 
-    You can find these values in your Firebase Console under Project Settings > General > Your Apps.
+4.  **Run Development Server**
+    ```bash
+    npm run dev
+    ```
+    Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
 
-### 4. Run Locally
+---
 
-Start the development server:
+## ⚙️ Configuration
+
+### Setting up AI (Claude)
+1.  Launch the application.
+2.  Navigate to **Settings** or click the **"Set API Key"** button in the top bar.
+3.  Paste your **Anthropic API Key**.
+    *   *Note: The key is stored securely in your user profile in Firestore.*
+
+---
+
+## 🚢 Deployment
+
+Deploy to Firebase Hosting with a single command:
 
 ```bash
-npm run dev
-# or
-yarn dev
+npm run deploy
 ```
+*This script builds the application (`vite build`) and deploys it (`firebase deploy`).*
 
-The application will be available at `http://localhost:5173`.
+---
 
-### 5. AI Configuration
+## 🤝 Contributing
 
-To use the AI features:
-1.  Log in to the application.
-2.  Click on the **"Set API Key"** button in the navigation bar.
-3.  Enter your Anthropic API Key (starting with `sk-ant-...`).
-4.  The key is stored securely in your user profile in Firestore.
+1.  **Fork** the project.
+2.  **Create** your feature branch (`git checkout -b feature/NewFeature`).
+3.  **Commit** your changes (`git commit -m 'Add some NewFeature'`).
+4.  **Push** to the branch (`git push origin feature/NewFeature`).
+5.  **Open** a Pull Request.
 
-## Deployment
+---
 
-The project is configured for deployment on Firebase Hosting.
-
-1.  Install Firebase CLI globally:
-
-    ```bash
-    npm install -g firebase-tools
-    ```
-
-2.  Login to Firebase:
-
-    ```bash
-    firebase login
-    ```
-
-3.  Initialize Firebase (if not already done):
-
-    ```bash
-    firebase init
-    ```
-    (Select Hosting, choose your project, use `dist` as public directory, configure as single-page app)
-
-4.  Build and Deploy:
-
-    ```bash
-    npm run deploy
-    ```
-    This command runs `vite build` and then `firebase deploy`.
-
-## Contributing
-
-1.  Fork the repository
-2.  Create your feature branch (`git checkout -b feature/amazing-feature`)
-3.  Commit your changes (`git commit -m 'Add some amazing feature'`)
-4.  Push to the branch (`git push origin feature/amazing-feature`)
-5.  Open a Pull Request
+> **Happy Thinking!** 🧩

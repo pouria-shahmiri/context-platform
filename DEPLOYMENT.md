@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide will help you deploy your **Pyramid Solver** application to production using **Firebase** and **Vercel** (or any static site host).
+This guide will help you deploy your **Context Platform** application to production using **Firebase** and **Vercel** (or any static site host).
 
 ## 1. Firebase Setup
 
