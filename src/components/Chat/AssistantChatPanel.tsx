@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGlobalContext } from '../../contexts/GlobalContext';
+import { useCurrentPageContext } from '../../hooks/useCurrentPageContext';
 import { 
   subscribeToChat, 
   subscribeToConversations, 
@@ -9,7 +10,7 @@ import {
   createConversation
 } from '../../services/chatService';
 import { 
-  sendChatMessage, 
+  sendGlobalChatMessage, 
 } from '../../services/anthropic';
 import { Conversation as ConversationType, StoredMessage, Pyramid, ProductDefinition } from '../../types';
 import {
@@ -18,8 +19,15 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Plus, Bot, X } from 'lucide-react';
+import { Plus, Bot, X, Info } from 'lucide-react';
 import { cn } from "@/lib/utils"
 
 // AI Elements
@@ -38,7 +46,8 @@ import {
   PromptInputTextarea,
   PromptInputFooter,
   PromptInputSubmit,
-  PromptInputTools
+  PromptInputTools,
+  PromptInputButton
 } from '../ai-elements/prompt-input';
 
 interface ChatPanelProps {
@@ -61,6 +70,23 @@ const AssistantChatPanel: React.FC<ChatPanelProps> = ({
 }) => {
   const { user, apiKey } = useAuth();
   const { aggregatedContext: globalContext } = useGlobalContext();
+  const { context: pageContext, title: pageTitle } = useCurrentPageContext();
+
+  const activeContext = useMemo(() => {
+    let contextToUse = additionalContext || "";
+    
+    // Priority: Explicit Props > Page Context
+    if (pyramid) {
+        contextToUse += `\nPyramid Context: ${pyramid.title}\n${pyramid.context || ""}\nBlocks: ${JSON.stringify(pyramid.blocks)}`;
+    } else if (productDefinition) {
+            contextToUse += `\nProduct Definition Context: ${productDefinition.title}\n${JSON.stringify(productDefinition.data)}`;
+    } else if (pageContext) {
+        // Use the automatically detected context
+        contextToUse += `\n${pageContext}`;
+    }
+    return contextToUse;
+  }, [additionalContext, pyramid, productDefinition, pageContext]);
+
   const [messages, setMessages] = useState<StoredMessage[]>([]);
   const [conversations, setConversations] = useState<ConversationType[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -131,8 +157,7 @@ const AssistantChatPanel: React.FC<ChatPanelProps> = ({
         await sendMessage(user.uid, conversationId, 'user', textContent);
 
         // 2. Prepare context
-        let context = additionalContext || "";
-        if (pyramid) context += `\nPyramid Context: ${pyramid.context || ""}`;
+        const contextToUse = activeContext;
         
         // 3. History
         const history = messages.map(m => {
@@ -146,13 +171,12 @@ const AssistantChatPanel: React.FC<ChatPanelProps> = ({
         });
         
         // 4. Send to AI
-        const aiResponse = await sendChatMessage(
+        const aiResponse = await sendGlobalChatMessage(
             apiKey,
-            pyramid as any, 
+            globalContext,
             history,
             textContent,
-            context,
-            globalContext
+            contextToUse
         );
         
         // 5. Save assistant response
@@ -204,7 +228,25 @@ const AssistantChatPanel: React.FC<ChatPanelProps> = ({
         {/* Chat Area */}
         <div className="flex-1 flex flex-col h-full overflow-hidden bg-background">
             <SheetHeader className="p-4 border-b flex-shrink-0 flex flex-row items-center justify-between space-y-0">
-                <SheetTitle>AI Assistant</SheetTitle>
+                <SheetTitle className="flex items-center gap-2">
+                    AI Assistant
+                    {/* Show context indicator */}
+                    {(pageTitle && !pyramid && !productDefinition) && (
+                        <span className="text-sm font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                            {pageTitle}
+                        </span>
+                    )}
+                    {(pyramid) && (
+                         <span className="text-sm font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                            {pyramid.title}
+                        </span>
+                    )}
+                     {(productDefinition) && (
+                         <span className="text-sm font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                            {productDefinition.title}
+                        </span>
+                    )}
+                </SheetTitle>
             </SheetHeader>
             
             <Conversation className="flex-1 overflow-hidden">
@@ -268,7 +310,23 @@ const AssistantChatPanel: React.FC<ChatPanelProps> = ({
                             className="min-h-[60px] max-h-[200px] border-0 focus:ring-0 resize-none py-3 px-4"
                         />
                         <PromptInputFooter>
-                            <PromptInputTools />
+                            <PromptInputTools>
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <PromptInputButton type="button" variant="ghost" size="icon-sm" title="View Context">
+                                            <Info className="size-4 text-muted-foreground" />
+                                        </PromptInputButton>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                                        <DialogHeader>
+                                            <DialogTitle>Current Context</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="whitespace-pre-wrap font-mono text-xs bg-muted p-4 rounded-md overflow-x-auto">
+                                            {activeContext || "No specific context active."}
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+                            </PromptInputTools>
                             <PromptInputSubmit 
                                 onClick={handleSend}
                                 disabled={!input.trim() || isTyping || !apiKey} 

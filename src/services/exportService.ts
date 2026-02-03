@@ -552,15 +552,70 @@ export const importWorkspaceFromJson = async (
         // 6. Import Others
         await processCollection(json.technicalArchitectures, 'technical_architectures');
         await processCollection(json.uiUxArchitectures, 'ui_ux_architectures');
-        await processCollection(json.diagrams, 'diagrams');
+        
+        // Handle Diagrams specially to remap context sources
+        if (json.diagrams) {
+            for (const diag of json.diagrams) {
+                 const oldId = diag.id;
+                 const { id, ...data } = diag;
+                 data.userId = userId;
+                 data.workspaceId = newWorkspaceId;
+                 data.createdAt = timestamp;
+                 data.lastModified = timestamp;
+
+                 // Remap context sources in nodes
+                 if (data.nodes && Array.isArray(data.nodes)) {
+                     data.nodes = data.nodes.map((node: any) => {
+                         if (node.data && node.data.contextSources && Array.isArray(node.data.contextSources)) {
+                             node.data.contextSources = node.data.contextSources.map((source: any) => {
+                                 if (idMap.has(source.id)) {
+                                     return { ...source, id: idMap.get(source.id) };
+                                 }
+                                 return source;
+                             });
+                         }
+                         return node;
+                     });
+                 }
+
+                 const docRef = await addDoc(collection(db, 'diagrams'), data);
+                 idMap.set(oldId, docRef.id);
+            }
+        }
         
         // Technical Tasks & Pipelines
         if (json.technicalTasks) {
              await processCollection(json.technicalTasks.pipelines, 'pipelines');
-             // Tasks might link to pipelines, ideally should map pipeline IDs too
-             // But for now let's just import tasks. If tasks have pipelineId, we need to map it.
-             // Assuming simple import for now.
-             await processCollection(json.technicalTasks.tasks, 'technical_tasks');
+             
+             // Import tasks with ID remapping
+             if (json.technicalTasks.tasks) {
+                 for (const task of json.technicalTasks.tasks) {
+                     const oldId = task.id;
+                     const { id, ...data } = task;
+                     data.userId = userId;
+                     data.workspaceId = newWorkspaceId;
+                     data.createdAt = timestamp;
+                     data.updatedAt = timestamp;
+
+                     // Remap pipelineId
+                     if (data.pipelineId && idMap.has(data.pipelineId)) {
+                         data.pipelineId = idMap.get(data.pipelineId);
+                     }
+                     
+                     // Remap technicalArchitectureId
+                     if (data.technicalArchitectureId && idMap.has(data.technicalArchitectureId)) {
+                         data.technicalArchitectureId = idMap.get(data.technicalArchitectureId);
+                     }
+
+                     // Remap data.task_metadata.parent_architecture_ref
+                     if (data.data?.task_metadata?.parent_architecture_ref && idMap.has(data.data.task_metadata.parent_architecture_ref)) {
+                         data.data.task_metadata.parent_architecture_ref = idMap.get(data.data.task_metadata.parent_architecture_ref);
+                     }
+
+                     const docRef = await addDoc(collection(db, 'technical_tasks'), data);
+                     idMap.set(oldId, docRef.id);
+                 }
+             }
         }
 
         resolve(newWorkspaceId);

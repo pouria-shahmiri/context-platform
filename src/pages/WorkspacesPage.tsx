@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 import { useAuth } from '../contexts/AuthContext';
-import { checkWorkspaceEmpty } from '../services/workspaceService';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -24,6 +23,12 @@ const WorkspacesPage = () => {
     const [workspaceToRename, setWorkspaceToRename] = useState<any>(null);
     const [renameName, setRenameName] = useState('');
     const [isRenaming, setIsRenaming] = useState(false);
+
+    // Delete state
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [workspaceToDelete, setWorkspaceToDelete] = useState<any>(null);
+    const [deleteName, setDeleteName] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const handleCreate = async () => {
         if (!newWorkspaceName.trim()) return;
@@ -63,29 +68,35 @@ const WorkspacesPage = () => {
         }
     };
 
-    const handleDelete = async (e: React.MouseEvent, id: string) => {
+    const openDeleteDialog = (e: React.MouseEvent, workspace: any) => {
         e.stopPropagation();
-        if (workspaces.length <= 1) {
-            toast.error("You must have at least one workspace");
+        setWorkspaceToDelete(workspace);
+        setDeleteName('');
+        setIsDeleteOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!workspaceToDelete) return;
+
+        if (deleteName !== workspaceToDelete.name) {
+            toast.error("Workspace name does not match");
             return;
         }
 
         if (!user) return;
-        
-        try {
-            const isEmpty = await checkWorkspaceEmpty(id, user.uid);
-            if (!isEmpty) {
-                toast.error("Workspace is not empty. Please delete all contents first.");
-                return;
-            }
 
-            if (window.confirm("Are you sure you want to delete this workspace?")) {
-                await removeWorkspace(id);
-                toast.success("Workspace deleted");
-            }
+        setIsDeleting(true);
+        try {
+            await removeWorkspace(workspaceToDelete.id);
+            toast.success("Workspace deleted");
+            setIsDeleteOpen(false);
+            setWorkspaceToDelete(null);
+            setDeleteName('');
         } catch (error) {
             console.error("Delete failed:", error);
             toast.error("Failed to delete workspace");
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -174,8 +185,7 @@ const WorkspacesPage = () => {
                                 variant="ghost" 
                                 size="icon" 
                                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onClick={(e) => handleDelete(e, workspace.id)}
-                                disabled={workspaces.length <= 1}
+                                onClick={(e) => openDeleteDialog(e, workspace)}
                              >
                                 <Trash2 className="h-4 w-4" />
                             </Button>
@@ -208,6 +218,35 @@ const WorkspacesPage = () => {
                         <Button onClick={handleRename} disabled={isRenaming}>
                             {isRenaming && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Save
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Workspace</DialogTitle>
+                        <DialogDescription>
+                            This action cannot be undone. Please type <strong>{workspaceToDelete?.name}</strong> to confirm.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="delete-name">Workspace Name</Label>
+                            <Input 
+                                id="delete-name" 
+                                value={deleteName} 
+                                onChange={(e) => setDeleteName(e.target.value)}
+                                placeholder={workspaceToDelete?.name}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>Cancel</Button>
+                        <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting || deleteName !== workspaceToDelete?.name}>
+                            {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Delete
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -504,15 +504,21 @@ export const sendGlobalChatMessage = async (
   apiKey: string,
   globalContext: string,
   history: ChatMessage[],
-  userMessage: string
+  userMessage: string,
+  currentPageContext: string = ""
 ): Promise<string> => {
   if (!apiKey) throw new Error("API Key is missing");
   const anthropic = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
   const historyText = history.map(h => `${h.role.toUpperCase()}: ${h.content}`).join("\n");
+  
+  const currentPageSection = currentPageContext ? `\nCURRENT PAGE CONTEXT (The user is currently looking at this):\n${currentPageContext}\n` : "";
+
   const prompt = `
-You are an assistant responding with awareness of the provided global context.
+You are an assistant responding with awareness of the provided global context and the current page the user is viewing.
+
 GLOBAL PROJECT CONTEXT:
 ${globalContext}
+${currentPageSection}
 CHAT HISTORY:
 ${historyText}
 USER MESSAGE:

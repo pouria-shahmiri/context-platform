@@ -107,14 +107,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           diagrams,
           pipelines
         ] = await Promise.all([
-          getUserPyramids(user.uid),
-          getUserProductDefinitions(user.uid),
-          getUserContextDocuments(user.uid),
-          getUserDirectories(user.uid),
-          getUserTechnicalArchitectures(user.uid),
-          getUserUiUxArchitectures(user.uid),
-          getUserDiagrams(user.uid),
-          getPipelines(user.uid)
+          getUserPyramids(user.uid, workspaceId),
+          getUserProductDefinitions(user.uid, workspaceId),
+          getUserContextDocuments(user.uid, workspaceId),
+          getUserDirectories(user.uid, workspaceId),
+          getUserTechnicalArchitectures(user.uid, workspaceId),
+          getUserUiUxArchitectures(user.uid, workspaceId),
+          getUserDiagrams(user.uid, workspaceId),
+          getPipelines(user.uid, workspaceId)
         ]);
 
         // Process Context & Documents
