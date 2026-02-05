@@ -57,14 +57,19 @@ rules_version = '2';
      } 
  
      // Independent Conversations collection 
-     match /conversations/{conversationId} { 
-       allow create: if isOwner(request.resource.data.userId); 
-       allow read, update, delete: if isOwner(resource.data.userId); 
- 
-       match /messages/{messageId} { 
-         allow read, write: if parentIsOwned('conversations', conversationId); 
-       } 
-     } 
+    match /conversations/{conversationId} { 
+      allow create: if isOwner(request.resource.data.userId); 
+      allow read, update, delete: if isOwner(resource.data.userId); 
+      
+      // Note: Messages are now embedded as an array field 'messages' within the conversation document.
+      // Legacy subcollection support is removed.
+    } 
+
+    // Messages collection (Root level for chatService)
+    match /messages/{messageId} {
+      allow create: if isOwner(request.resource.data.userId);
+      allow read, update, delete: if isOwner(resource.data.userId);
+    }
  
     // Context Documents collection 
     match /contextDocuments/{documentId} { 

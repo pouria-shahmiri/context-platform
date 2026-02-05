@@ -6,9 +6,8 @@ import {
   subscribeToChat, 
   createConversation, 
   deleteConversation,
-  sendMessage
 } from '../services/chatService';
-import { sendGlobalChatMessage } from '../services/anthropic';
+import { aiService } from '../services/aiService';
 import { Conversation as ConversationType, StoredMessage } from '../types';
 import { Plus, MessageSquare, Trash2, Bot, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -111,49 +110,15 @@ const AiChatPage: React.FC = () => {
           }
           
           if (currentConvId && user && apiKey) {
-            // 1. Add user message to Firestore
-            await sendMessage(
-                user.uid, 
-                currentConvId, 
-                'user',
-                userMessageContent,
-                {},
-                'conversations'
-            );
-
-            // Prepare history for API
-            const historyForApi = messages.map(msg => {
-                let contentStr = '';
-                if (Array.isArray(msg.content)) {
-                    contentStr = msg.content.map(c => (c as any).text || '').join('');
-                } else if (typeof msg.content === 'string') {
-                    contentStr = msg.content;
-                }
-                return {
-                    role: (msg.role === 'conversations' ? 'user' : msg.role) as "user" | "assistant",
-                    content: contentStr
-                };
-            });
-
-            // 2. Call Anthropic API
-            const response = await sendGlobalChatMessage(
+            await aiService.processGlobalChat(
+                user.uid,
                 apiKey,
+                currentConvId,
+                userMessageContent,
                 globalContext || "",
-                [...historyForApi, { role: 'user', content: userMessageContent }] as any,
-                userMessageContent
+                messages,
+                "" // No current page context for general chat page
             );
-
-            // 3. Add assistant response to Firestore
-            if (response) {
-                await sendMessage(
-                    user.uid,
-                    currentConvId,
-                    'assistant',
-                    response,
-                    {},
-                    'conversations'
-                );
-            }
           } else if (!apiKey) {
             alert("Please add your API Key in the Settings or Profile page to use the AI chat.");
           }
@@ -280,6 +245,17 @@ const AiChatPage: React.FC = () => {
                             </Message>
                         );
                     })
+                )}
+                {isRunning && (
+                    <Message from="assistant" className="items-start">
+                        <MessageContent className="bg-muted border border-border text-foreground px-4 py-3 rounded-2xl shadow-sm">
+                            <div className="flex items-center gap-1 h-6">
+                                <div className="w-2 h-2 bg-primary/50 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                <div className="w-2 h-2 bg-primary/50 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                <div className="w-2 h-2 bg-primary/50 rounded-full animate-bounce"></div>
+                            </div>
+                        </MessageContent>
+                    </Message>
                 )}
             </ConversationContent>
          </Conversation>

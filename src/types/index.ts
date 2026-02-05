@@ -85,6 +85,7 @@ export interface Conversation {
   title: string;
   createdAt: Date | null;
   updatedAt: Date | null;
+  messages: StoredMessage[];
 }
 
 export interface ContextDocument {

@@ -2,19 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGlobalContext } from '../../contexts/GlobalContext';
 import { 
-  sendMessage, 
-  subscribeToChat, 
   subscribeToConversations, 
+  subscribeToChat, 
   createConversation, 
-  deleteConversation 
+  deleteConversation,
 } from '../../services/chatService';
-import { 
-  sendChatMessage, 
-  sendGlobalChatMessage,
-  sendProductDefinitionChatMessage
-} from '../../services/anthropic';
+import { aiService } from '../../services/aiService';
 import { Conversation as ConversationType, StoredMessage, Pyramid, ProductDefinition } from '../../types';
-import { Bot, MessageSquare, Plus, Trash2, X } from 'lucide-react';
+import { Plus, MessageSquare, Trash2, Bot, X } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 // UI Components
@@ -131,38 +126,18 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
 
       if (!currentConversationId) return;
 
-      // 1. Optimistic Update (Optional, as subscription will catch it)
-      // We skip optimistic update here to rely on subscription or just wait.
-      
-      // 2. Save user message
-      await sendMessage(user.uid, currentConversationId, 'user', userMsg, {}, 'conversations');
-
-      // 3. Get AI Response
-      // Create a simplified message history for the AI service
-      const historyForApi = messages.map(msg => {
-          let contentStr = '';
-          if (Array.isArray(msg.content)) {
-              contentStr = msg.content.map(c => (c as any).text || '').join('');
-          } else if (typeof msg.content === 'string') {
-              contentStr = msg.content;
-          }
-          return {
-              role: (msg.role === 'conversations' ? 'user' : msg.role) as "user" | "assistant",
-              content: contentStr
-          };
-      });
-
       // Prepare context
       let contextToUse = additionalContext || "";
-      let response = "";
-
+      
       if (productDefinition) {
-          response = await sendProductDefinitionChatMessage(
+          await aiService.processProductDefinitionChat(
+              user.uid,
               apiKey,
-              productDefinition,
-              historyForApi as any,
+              currentConversationId,
               userMsg,
-              contextToUse
+              productDefinition,
+              contextToUse,
+              messages
           );
       } else {
           let globalContextStr = globalContext || "";
@@ -173,26 +148,17 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
               globalContextStr += `\n\nAdditional Context: ${contextToUse}`;
           }
 
-          response = await sendGlobalChatMessage(
+          await aiService.processGlobalChat(
+              user.uid,
               apiKey,
+              currentConversationId,
+              userMsg,
               globalContextStr,
-              [...historyForApi, { role: 'user', content: userMsg }] as any,
-              userMsg
+              messages,
+              "" // No explicit page context here
           );
       }
-
-      // 4. Save Assistant Response
-      if (response) {
-          await sendMessage(
-              user.uid, 
-              currentConversationId, 
-              'assistant', 
-              response, 
-              {}, 
-              'conversations'
-          );
-      }
-
+      
     } catch (error) {
       console.error("Error sending message:", error);
       alert("Failed to send message.");
@@ -319,6 +285,17 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                                     </Message>
                                 );
                             })
+                        )}
+                        {isTyping && (
+                            <Message from="assistant" className="items-start">
+                                <MessageContent className="bg-white border border-gray-100 text-gray-900 px-4 py-3 rounded-2xl shadow-sm">
+                                    <div className="flex items-center gap-1 h-6">
+                                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
+                                    </div>
+                                </MessageContent>
+                            </Message>
                         )}
                     </ConversationContent>
                 </Conversation>

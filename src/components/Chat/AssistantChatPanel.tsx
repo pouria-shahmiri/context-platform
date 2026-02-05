@@ -6,12 +6,9 @@ import {
   subscribeToChat, 
   subscribeToConversations, 
   deleteConversation, 
-  sendMessage,
   createConversation
 } from '../../services/chatService';
-import { 
-  sendGlobalChatMessage, 
-} from '../../services/anthropic';
+import { aiService } from '../../services/aiService';
 import { Conversation as ConversationType, StoredMessage, Pyramid, ProductDefinition } from '../../types';
 import {
   Sheet,
@@ -153,36 +150,16 @@ const AssistantChatPanel: React.FC<ChatPanelProps> = ({
 
         if (!conversationId) return;
 
-        // 1. Save user message
-        await sendMessage(user.uid, conversationId, 'user', textContent);
-
-        // 2. Prepare context
-        const contextToUse = activeContext;
-        
-        // 3. History
-        const history = messages.map(m => {
-            let contentStr = '';
-            if (Array.isArray(m.content)) {
-                contentStr = m.content.map(c => (c as any).text || '').join('');
-            } else if (typeof m.content === 'string') {
-                contentStr = m.content;
-            }
-            return { role: m.role as "user" | "assistant", content: contentStr };
-        });
-        
-        // 4. Send to AI
-        const aiResponse = await sendGlobalChatMessage(
+        // Use AI Service to handle the chat interaction
+        await aiService.processGlobalChat(
+            user.uid,
             apiKey,
-            globalContext,
-            history,
+            conversationId,
             textContent,
-            contextToUse
+            globalContext,
+            messages,
+            activeContext
         );
-        
-        // 5. Save assistant response
-        if (aiResponse) {
-            await sendMessage(user.uid, conversationId, 'assistant', aiResponse);
-        }
         
     } catch (error) {
         console.error(error);
@@ -286,6 +263,17 @@ const AssistantChatPanel: React.FC<ChatPanelProps> = ({
                                 </Message>
                             );
                         })
+                    )}
+                    {isTyping && (
+                        <Message from="assistant" className="items-start">
+                            <MessageContent className="bg-white border border-gray-100 text-gray-900 px-4 py-3 rounded-2xl shadow-sm">
+                                <div className="flex items-center gap-1 h-6">
+                                    <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                    <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                    <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
+                                </div>
+                            </MessageContent>
+                        </Message>
                     )}
                 </ConversationContent>
             </Conversation>

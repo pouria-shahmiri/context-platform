@@ -100,16 +100,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userCredential = await signInWithPopup(auth, provider);
       
       // Check if user doc exists, if not create it
-      const userDoc = await storage.get('users', userCredential.user.uid);
+      let userDoc = await storage.get('users', userCredential.user.uid);
       
       if (!userDoc) {
-        await storage.save('users', {
+        userDoc = {
           id: userCredential.user.uid,
           email: userCredential.user.email,
           apiKey: '',
           createdAt: new Date().toISOString()
-        });
+        };
+        await storage.save('users', userDoc);
       }
+      
+      // Set API Key immediately
+      setApiKey(userDoc.apiKey || userDoc.api_key || '');
+
       return userCredential.user;
     } catch (error: any) {
       console.error("Error signing in with Google:", error);
@@ -129,6 +134,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Force enable cloud sync on login
       localStorage.setItem('settings_saveToCloud', 'true');
       localStorage.setItem('settings_saveLocally', 'true');
+
+      // Check if user doc exists, if not create it
+      let userDoc = await storage.get('users', userCredential.user.uid);
+      
+      if (!userDoc) {
+        userDoc = {
+          id: userCredential.user.uid,
+          email: userCredential.user.email,
+          apiKey: '',
+          createdAt: new Date().toISOString()
+        };
+        await storage.save('users', userDoc);
+      }
+      
+      // Set API Key immediately
+      setApiKey(userDoc.apiKey || userDoc.api_key || '');
+
       return userCredential.user;
     } catch (error: any) {
       console.error("Error signing in with Email:", error);
@@ -151,12 +173,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('settings_saveLocally', 'true');
 
       // Create user doc
-      await storage.save('users', {
+      const userDoc = {
         id: userCredential.user.uid,
         email: userCredential.user.email,
         apiKey: '',
         createdAt: new Date().toISOString()
-      });
+      };
+      await storage.save('users', userDoc);
+      
+      // Set API Key immediately
+      setApiKey('');
       
       return userCredential.user;
     } catch (error: any) {
@@ -217,9 +243,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const updateApiKey = async (newKey: string) => {
     if (!user) return;
     try {
-        await storage.update('users', user.uid, {
-            apiKey: newKey
-        });
+        const userDoc = await storage.get('users', user.uid);
+        if (userDoc) {
+            await storage.update('users', user.uid, {
+                apiKey: newKey
+            });
+        } else {
+            await storage.save('users', {
+                id: user.uid,
+                email: user.email,
+                apiKey: newKey,
+                createdAt: new Date().toISOString()
+            });
+        }
         setApiKey(newKey);
     } catch (error) {
         console.error("Error updating API key:", error);

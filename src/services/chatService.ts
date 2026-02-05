@@ -4,6 +4,21 @@ import { Conversation, StoredMessage } from '../types';
 const CONVERSATIONS_TABLE = 'conversations';
 const MESSAGES_TABLE = 'messages';
 
+// Helper to map Message
+const mapMessageFromStorage = (data: any): StoredMessage | null => {
+  if (!data) return null;
+  return {
+    id: data.id,
+    userId: data.userId || data.user_id,
+    role: data.role,
+    content: data.content,
+    timestamp: (data.createdAt || data.created_at) ? new Date(data.createdAt || data.created_at) : (data.timestamp ? new Date(data.timestamp) : null),
+    metadata: data.metadata || {},
+    parentId: data.parentId || data.parent_id,
+    parentCollection: data.parentCollection || data.parent_collection
+  };
+};
+
 // Helper to map Conversation
 const mapConversationFromStorage = (data: any): Conversation | null => {
   if (!data) return null;
@@ -13,21 +28,9 @@ const mapConversationFromStorage = (data: any): Conversation | null => {
     title: data.title,
     createdAt: (data.createdAt || data.created_at) ? new Date(data.createdAt || data.created_at) : null,
     updatedAt: (data.updatedAt || data.updated_at) ? new Date(data.updatedAt || data.updated_at) : null,
-  };
-};
-
-// Helper to map Message
-const mapMessageFromStorage = (data: any): StoredMessage | null => {
-  if (!data) return null;
-  return {
-    id: data.id,
-    userId: data.userId || data.user_id,
-    role: data.role,
-    content: data.content,
-    timestamp: (data.createdAt || data.created_at) ? new Date(data.createdAt || data.created_at) : null,
-    metadata: data.metadata || {},
-    parentId: data.parentId || data.parent_id,
-    parentCollection: data.parentCollection || data.parent_collection
+    messages: Array.isArray(data.messages) 
+        ? data.messages.map(mapMessageFromStorage).filter((m: any): m is StoredMessage => m !== null)
+        : []
   };
 };
 
@@ -44,7 +47,8 @@ export const createConversation = async (userId: string, title: string = 'New Ch
       userId: userId,
       title,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      messages: [] // Initialize empty messages array
     };
     
     await storage.save(CONVERSATIONS_TABLE, newDoc);
@@ -94,15 +98,13 @@ export const updateConversationTitle = async (conversationId: string, newTitle: 
  */
 export const deleteConversation = async (conversationId: string): Promise<void> => {
     try {
-        // Delete messages first
-        // We query messages by parentId
-        const messages = await storage.query(MESSAGES_TABLE, { parentId: conversationId });
-        
-        const deletePromises = messages.map(msg => storage.delete(MESSAGES_TABLE, msg.id));
-        await Promise.all(deletePromises);
-        
-        // Delete conversation document
+        // Just delete the conversation document (messages are embedded)
         await storage.delete(CONVERSATIONS_TABLE, conversationId);
+        
+        // Clean up legacy messages (optional, if we want to be thorough)
+        // const messages = await storage.query(MESSAGES_TABLE, { parentId: conversationId });
+        // const deletePromises = messages.map(msg => storage.delete(MESSAGES_TABLE, msg.id));
+        // await Promise.all(deletePromises);
     } catch (error) {
         console.error("Error deleting conversation:", error);
         throw error;
@@ -135,14 +137,24 @@ export const sendMessage = async (
     };
 
     try {
-        // Save message to flat 'messages' table
-        await storage.save(MESSAGES_TABLE, messageData);
-
-        // If this is a conversation, update the updatedAt timestamp
         if (parentCollection === 'conversations') {
-            await storage.update(CONVERSATIONS_TABLE, parentId, {
-                updatedAt: new Date().toISOString()
-            });
+            // New embedded structure
+            const conversation = await storage.get(CONVERSATIONS_TABLE, parentId);
+            if (conversation) {
+                const messages = conversation.messages || [];
+                // If existing messages are not in the array (migration case), we might lose them 
+                // unless we query them. But assuming we want to move forward:
+                
+                messages.push(messageData);
+                
+                await storage.update(CONVERSATIONS_TABLE, parentId, {
+                    messages,
+                    updatedAt: new Date().toISOString()
+                });
+            }
+        } else {
+            // Legacy/Other collection support (e.g. comments)
+            await storage.save(MESSAGES_TABLE, messageData);
         }
     } catch (error) {
         console.error("Error sending message:", error);
@@ -161,27 +173,42 @@ export const subscribeToChat = (
 ) => {
     if (!userId || !parentId) return () => {};
 
-    // We filter by userId and parentId
-    const filters = {
-        userId,
-        parentId
-    };
+    if (parentCollection === 'conversations') {
+        // Subscribe to the conversation document
+        return storage.subscribe(CONVERSATIONS_TABLE, parentId, (data) => {
+            const conv = mapConversationFromStorage(data);
+            if (conv) {
+                const messages = (conv.messages || []).sort((a, b) => {
+                    const dateA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+                    const dateB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+                    return dateA - dateB;
+                });
+                callback(messages);
+            } else {
+                callback([]);
+            }
+        });
+    } else {
+        // Legacy subscription for other collections
+        const filters = {
+            userId,
+            parentId
+        };
 
-    return storage.subscribeQuery(MESSAGES_TABLE, filters, (results) => {
-        const messages = results
-            .map(mapMessageFromStorage)
-            .filter((m): m is StoredMessage => m !== null)
-            .sort((a, b) => {
-                const dateA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-                const dateB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-                return dateA - dateB;
-            });
-            
-        // We only take the last 50 messages after sorting
-        const recentMessages = messages.slice(-50);
-        
-        callback(recentMessages);
-    });
+        return storage.subscribeQuery(MESSAGES_TABLE, filters, (results) => {
+            const messages = results
+                .map(mapMessageFromStorage)
+                .filter((m): m is StoredMessage => m !== null)
+                .sort((a, b) => {
+                    const dateA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+                    const dateB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+                    return dateA - dateB;
+                });
+                
+            const recentMessages = messages.slice(-50);
+            callback(recentMessages);
+        });
+    }
 };
 
 /**
@@ -191,9 +218,16 @@ export const clearChatHistory = async (userId: string, parentId: string, parentC
     if (!userId || !parentId) return;
 
     try {
-        const messages = await storage.query(MESSAGES_TABLE, { userId, parentId });
-        const deletePromises = messages.map(msg => storage.delete(MESSAGES_TABLE, msg.id));
-        await Promise.all(deletePromises);
+        if (parentCollection === 'conversations') {
+            await storage.update(CONVERSATIONS_TABLE, parentId, {
+                messages: [],
+                updatedAt: new Date().toISOString()
+            });
+        } else {
+            const messages = await storage.query(MESSAGES_TABLE, { userId, parentId });
+            const deletePromises = messages.map(msg => storage.delete(MESSAGES_TABLE, msg.id));
+            await Promise.all(deletePromises);
+        }
     } catch (error) {
         console.error("Error clearing chat history:", error);
         throw error;
