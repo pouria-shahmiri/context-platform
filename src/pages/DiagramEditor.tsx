@@ -8,6 +8,7 @@ import DiagramBlockModal from '../components/Diagram/DiagramBlockModal';
 import { Diagram, DiagramNodeData } from '../types';
 import { Plus, Pencil, Check, X, Save, Download, ArrowLeft } from 'lucide-react';
 import { fetchContextData } from '../services/contextAdapter';
+import { useWorkspace } from '../contexts/WorkspaceContext';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

@@ -50,13 +50,40 @@ export const updateWorkspace = async (workspaceId: string, updates: Partial<Work
 };
 
 export const deleteWorkspace = async (workspaceId: string, userId: string): Promise<void> => {
-    // cleanup pipelines
-    // pipelinesQuery: where workspaceId == workspaceId AND userId == userId
-    // storage.query supports multiple filters
-    const pipelines = await storage.query('pipelines', { workspaceId, userId });
-    
-    const deletePromises = pipelines.map(p => storage.delete('pipelines', p.id));
-    await Promise.all(deletePromises);
+    const commonFilter = { workspaceId, userId };
 
+    // 1. Delete simple collections (direct workspace children)
+    const collections = [
+        'pyramids',
+        'productDefinitions',
+        'contextDocuments',
+        'directories',
+        'uiUxArchitectures',
+        'diagrams',
+        'technicalTasks',
+        'pipelines',
+        'technicalArchitectures',
+        'globalTasks'
+    ];
+
+    for (const collection of collections) {
+        const items = await storage.query(collection, commonFilter);
+        const promises = items.map(item => storage.delete(collection, item.id));
+        await Promise.all(promises);
+    }
+
+    // 2. Delete conversations and their messages
+    const conversations = await storage.query('conversations', commonFilter);
+    for (const conversation of conversations) {
+        // Delete messages for this conversation
+        const messages = await storage.query('messages', { parentId: conversation.id });
+        const messagePromises = messages.map(msg => storage.delete('messages', msg.id));
+        await Promise.all(messagePromises);
+        
+        // Delete the conversation itself
+        await storage.delete('conversations', conversation.id);
+    }
+
+    // 3. Finally delete the workspace
     await storage.delete('workspaces', workspaceId);
 };

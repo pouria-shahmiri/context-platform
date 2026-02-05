@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { useGlobalContext } from '../../contexts/GlobalContext';
-import { LogOut, LayoutGrid, Globe, Bot, Download, Lock, User } from 'lucide-react';
+import { LogOut, LayoutGrid, Globe, Bot, Download, Lock, User, RefreshCw } from 'lucide-react';
 import APIKeyModal from './APIKeyModal';
 import SetPasswordModal from './SetPasswordModal';
+import SyncModal from './SyncModal';
+import { useSyncStore } from '../../services/syncStore';
 import ContextModal from './ContextModal';
 import ContextSelectorModal from '../GlobalContext/ContextSelectorModal';
 import { Link } from 'react-router-dom';
@@ -23,7 +25,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Navbar: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, isGuest } = useAuth();
   const { currentWorkspace } = useWorkspace();
   const { 
     setIsContextModalOpen, 
@@ -34,6 +36,8 @@ const Navbar: React.FC = () => {
   
   const [isExporting, setIsExporting] = useState<boolean>(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState<boolean>(false);
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState<boolean>(false);
+  const { isSyncing } = useSyncStore();
 
   return (
     <div className="sticky top-0 z-50 px-6 py-3 bg-white/80 backdrop-blur-md shadow-md border-b">
@@ -48,19 +52,14 @@ const Navbar: React.FC = () => {
 
         <div className="flex gap-3 items-center">
 
-          {/* Global Context Button */}
+          {/* Sync Button */}
           <Button 
             variant="ghost" 
-            onClick={() => setIsContextModalOpen(true)} 
+            onClick={() => setIsSyncModalOpen(true)} 
             className="cursor-pointer hover:bg-gray-100 transition-colors gap-2"
           >
-            <Globe size={16} className={selectedSources.length > 0 ? "text-indigo-500" : "text-gray-400"} />
-            Global Context
-            {selectedSources.length > 0 && (
-                <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200">
-                    {selectedSources.length}
-                </Badge>
-            )}
+            <RefreshCw size={16} className={isSyncing ? "animate-spin text-indigo-500" : "text-gray-400"} />
+            Sync
           </Button>
 
           {/* Export Workspace */}
@@ -94,6 +93,11 @@ const Navbar: React.FC = () => {
           <SetPasswordModal 
             isOpen={isPasswordModalOpen} 
             onClose={() => setIsPasswordModalOpen(false)} 
+          />
+
+          <SyncModal 
+            isOpen={isSyncModalOpen} 
+            onClose={() => setIsSyncModalOpen(false)} 
           />
 
           <APIKeyModal />

@@ -68,25 +68,6 @@ export const WorkspaceActions: React.FC = () => {
 
   return (
     <div className="flex items-center gap-1 sm:gap-2">
-      {/* Global Context - Only if workspace selected and in workspace mode */}
-      {isWorkspaceMode && (
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={() => setIsContextModalOpen(true)}
-          className="gap-2 h-8"
-          title="Global Context"
-        >
-          <Globe size={16} className={selectedSources.length > 0 ? "text-indigo-500" : "text-muted-foreground"} />
-          <span className="hidden md:inline text-sm">Global Context</span>
-          {selectedSources.length > 0 && (
-            <Badge variant="secondary" className="h-5 px-1.5 min-w-5 bg-indigo-100 text-indigo-700 hover:bg-indigo-200">
-              {selectedSources.length}
-            </Badge>
-          )}
-        </Button>
-      )}
-
       {/* Export - Only if workspace selected and in workspace mode */}
       {isWorkspaceMode && (
         <Button

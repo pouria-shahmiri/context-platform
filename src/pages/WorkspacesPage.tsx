@@ -149,50 +149,63 @@ const WorkspacesPage = () => {
                 </Dialog>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {workspaces.map((workspace) => (
-                    <Card 
-                        key={workspace.id} 
-                        className="cursor-pointer hover:border-primary transition-colors relative group"
-                        onClick={() => handleSelect(workspace)}
-                    >
-                        <CardHeader>
-                            <CardTitle className="flex justify-between items-center">
-                                <span className="flex items-center gap-2">
-                                    <FolderOpen className="h-5 w-5 text-primary" />
-                                    {workspace.name}
-                                </span>
-                            </CardTitle>
-                            <CardDescription>
-                                Created {workspace.createdAt?.toLocaleDateString()}
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-muted-foreground">
-                                Select to view dashboard
-                            </p>
-                        </CardContent>
-                        <CardFooter className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity gap-2">
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="text-muted-foreground hover:text-primary"
-                                onClick={(e) => openRenameDialog(e, workspace)}
-                            >
-                                <Pencil className="h-4 w-4" />
-                            </Button>
-                             <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onClick={(e) => openDeleteDialog(e, workspace)}
-                             >
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </CardFooter>
-                    </Card>
-                ))}
-            </div>
+            {workspaces.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 border rounded-lg border-dashed bg-muted/50">
+                    <FolderOpen className="h-16 w-16 text-muted-foreground mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">No Workspaces Found</h3>
+                    <p className="text-muted-foreground mb-6 text-center max-w-sm">
+                        You don't have any workspaces yet. Create one to start organizing your projects.
+                    </p>
+                    <Button onClick={() => setIsCreateOpen(true)}>
+                        <Plus className="mr-2 h-4 w-4" /> Create First Workspace
+                    </Button>
+                </div>
+            ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {workspaces.map((workspace) => (
+                        <Card 
+                            key={workspace.id} 
+                            className="cursor-pointer hover:border-primary transition-colors relative group"
+                            onClick={() => handleSelect(workspace)}
+                        >
+                            <CardHeader>
+                                <CardTitle className="flex justify-between items-center">
+                                    <span className="flex items-center gap-2">
+                                        <FolderOpen className="h-5 w-5 text-primary" />
+                                        {workspace.name}
+                                    </span>
+                                </CardTitle>
+                                <CardDescription>
+                                    Created {workspace.createdAt?.toLocaleDateString()}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm text-muted-foreground">
+                                    Select to view dashboard
+                                </p>
+                            </CardContent>
+                            <CardFooter className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity gap-2">
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="text-muted-foreground hover:text-primary"
+                                    onClick={(e) => openRenameDialog(e, workspace)}
+                                >
+                                    <Pencil className="h-4 w-4" />
+                                </Button>
+                                 <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    onClick={(e) => openDeleteDialog(e, workspace)}
+                                 >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                    ))}
+                </div>
+            )}
 
             <Dialog open={isRenameOpen} onOpenChange={setIsRenameOpen}>
                 <DialogContent>

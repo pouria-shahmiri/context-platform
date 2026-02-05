@@ -146,7 +146,15 @@ export const storage = {
 
   // Query (Flexible filters)
   query: async (collectionName: string, filters: Record<string, any>) => {
-    const { saveLocally, saveToCloud } = getStorageSettings();
+    const { isGuest, saveLocally, saveToCloud } = getStorageSettings();
+    
+    // Auto-scope to current user if not specified to prevent data leakage
+    const currentUserId = auth.currentUser?.uid || (isGuest ? 'guest' : undefined);
+    const effectiveFilters = { ...filters };
+    if (!effectiveFilters.userId && currentUserId) {
+        effectiveFilters.userId = currentUserId;
+    }
+
     let results: any[] = [];
     const ids = new Set();
 
@@ -158,15 +166,15 @@ export const storage = {
          let dexieCollection;
          
          // Optimization: Use userId index if available in filters
-         if (filters.userId) {
-            dexieCollection = table.where('userId').equals(filters.userId);
+         if (effectiveFilters.userId) {
+            dexieCollection = table.where('userId').equals(effectiveFilters.userId);
          } else {
             dexieCollection = table.toCollection();
          }
 
          // Apply all filters
          const localItems = await dexieCollection.filter((item: any) => {
-             return Object.entries(filters).every(([key, value]) => {
+             return Object.entries(effectiveFilters).every(([key, value]) => {
                  return item[key] === value;
              });
          }).toArray();
@@ -180,7 +188,7 @@ export const storage = {
 
     // Cloud Query
     if (saveToCloud && auth.currentUser) {
-      const constraints = Object.entries(filters).map(([key, value]) => where(key, '==', value));
+      const constraints = Object.entries(effectiveFilters).map(([key, value]) => where(key, '==', value));
       const q = query(collection(db, collectionName), ...constraints);
       
       const snapshot = await getDocs(q);
@@ -237,7 +245,15 @@ export const storage = {
 
   // Subscribe to Query (Real-time updates for list)
   subscribeQuery: (collectionName: string, filters: Record<string, any>, onUpdate: (data: any[]) => void) => {
-    const { saveLocally, saveToCloud } = getStorageSettings();
+    const { isGuest, saveLocally, saveToCloud } = getStorageSettings();
+    
+    // Auto-scope
+    const currentUserId = auth.currentUser?.uid || (isGuest ? 'guest' : undefined);
+    const effectiveFilters = { ...filters };
+    if (!effectiveFilters.userId && currentUserId) {
+        effectiveFilters.userId = currentUserId;
+    }
+
     const unsubscribers: (() => void)[] = [];
     
     // Local Subscription
@@ -247,13 +263,13 @@ export const storage = {
        if (table) {
          const subscription = liveQuery(async () => {
              let dexieCollection;
-             if (filters.userId) {
-                dexieCollection = table.where('userId').equals(filters.userId);
+             if (effectiveFilters.userId) {
+                dexieCollection = table.where('userId').equals(effectiveFilters.userId);
              } else {
                 dexieCollection = table.toCollection();
              }
              return await dexieCollection.filter((item: any) => {
-                 return Object.entries(filters).every(([key, value]) => item[key] === value);
+                 return Object.entries(effectiveFilters).every(([key, value]) => item[key] === value);
              }).toArray();
          }).subscribe(
            (data) => {
@@ -267,7 +283,7 @@ export const storage = {
 
     // Cloud Subscription
     if (saveToCloud && auth.currentUser) {
-       const constraints = Object.entries(filters).map(([key, value]) => where(key, '==', value));
+       const constraints = Object.entries(effectiveFilters).map(([key, value]) => where(key, '==', value));
        const q = query(collection(db, collectionName), ...constraints);
        
        const unsubscribeFirestore = onSnapshot(q, (snapshot) => {

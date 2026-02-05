@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { GitMerge, ArrowRight, BookOpen, Pyramid, LucideIcon, Server, CheckSquare, Layout, Bot } from 'lucide-react';
+import { GitMerge, ArrowRight, BookOpen, Pyramid, LucideIcon, Server, CheckSquare, Layout, Bot, Workflow } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 import { Link, useParams } from 'react-router-dom';
@@ -81,7 +81,7 @@ const Dashboard: React.FC = () => {
             />
 
             <ToolCard 
-                title="Context Platform" 
+                title="Pyramid Solver" 
                 description="Structure your problem solving with a logical pyramid approach. Break down complex issues into manageable questions and answers."
                 icon={Pyramid}
                 to="/pyramids"
@@ -132,6 +132,15 @@ const Dashboard: React.FC = () => {
                 to="/ui-ux-architectures"
                 color="bg-pink-600"
                 delay={0.7}
+            />
+
+            <ToolCard 
+                title="Diagrams" 
+                description="Create and manage visual diagrams to illustrate system flows, architectures, and processes."
+                icon={Workflow}
+                to="/diagrams"
+                color="bg-rose-600"
+                delay={0.8}
             />
         </div>
       </div>

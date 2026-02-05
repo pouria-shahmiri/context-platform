@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { auth } from '../services/firebase';
 import { storage } from '../services/storage';
+import { localDB } from '../services/localDB';
 import { 
   User, 
   GoogleAuthProvider, 
@@ -84,8 +85,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signInWithGoogle = async () => {
     setError(null);
+    
+    // Clear local data to avoid conflicts between Guest data and User data
+    await localDB.clearAllData();
+
     setIsGuest(false);
     localStorage.removeItem('auth_isGuest');
+    // Force enable cloud sync on login
+    localStorage.setItem('settings_saveToCloud', 'true');
+    localStorage.setItem('settings_saveLocally', 'true');
+    
     try {
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
@@ -111,8 +120,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signInWithEmail = async (email: string, pass: string) => {
     setError(null);
+    
+    // Clear local data to avoid conflicts
+    await localDB.clearAllData();
+
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+      // Force enable cloud sync on login
+      localStorage.setItem('settings_saveToCloud', 'true');
+      localStorage.setItem('settings_saveLocally', 'true');
       return userCredential.user;
     } catch (error: any) {
       console.error("Error signing in with Email:", error);
@@ -123,9 +139,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signUpWithEmail = async (email: string, pass: string) => {
     setError(null);
+    
+    // Clear local data to avoid conflicts
+    await localDB.clearAllData();
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
       
+      // Force enable cloud sync on login
+      localStorage.setItem('settings_saveToCloud', 'true');
+      localStorage.setItem('settings_saveLocally', 'true');
+
       // Create user doc
       await storage.save('users', {
         id: userCredential.user.uid,
@@ -205,6 +229,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     setApiKey('');
+    
+    // Clear local data to ensure next user starts fresh
+    await localDB.clearAllData();
     
     // Handle guest logout
     if (isGuest) {

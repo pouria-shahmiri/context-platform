@@ -66,6 +66,12 @@ export class LocalDB extends Dexie {
         users: 'id, email'
     });
   }
+
+  async clearAllData() {
+    await this.transaction('rw', this.tables, async () => {
+      await Promise.all(this.tables.map(table => table.clear()));
+    });
+  }
 }
 
 export const localDB = new LocalDB();

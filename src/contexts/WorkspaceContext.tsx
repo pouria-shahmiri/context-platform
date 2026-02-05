@@ -50,33 +50,23 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         setLoading(true);
         const userWorkspaces = await getUserWorkspaces(user.uid);
         
-        // Ensure at least one workspace exists
-        let finalWorkspaces = userWorkspaces;
-        if (userWorkspaces.length === 0) {
-            const newId = await createWorkspace(user.uid, 'My Workspace');
-            const newWorkspace: Workspace = {
-                id: newId,
-                userId: user.uid,
-                name: 'My Workspace',
-                createdAt: new Date(),
-                lastModified: new Date()
-            };
-            finalWorkspaces = [newWorkspace];
-        }
-        
-        setWorkspaces(finalWorkspaces);
+        setWorkspaces(userWorkspaces);
 
-        // Restore current workspace from localStorage or default to first
+        // Restore current workspace from localStorage
         const savedId = localStorage.getItem('currentWorkspaceId');
         if (savedId) {
-            const found = finalWorkspaces.find(w => w.id === savedId);
+            const found = userWorkspaces.find(w => w.id === savedId);
             if (found) {
                 setCurrentWorkspace(found);
-            } else if (finalWorkspaces.length > 0) {
-                setCurrentWorkspace(finalWorkspaces[0]);
+            } else if (userWorkspaces.length > 0) {
+                setCurrentWorkspace(userWorkspaces[0]);
+            } else {
+                setCurrentWorkspace(null);
             }
-        } else if (finalWorkspaces.length > 0 && !currentWorkspace) {
-            setCurrentWorkspace(finalWorkspaces[0]);
+        } else if (userWorkspaces.length > 0 && !currentWorkspace) {
+            setCurrentWorkspace(userWorkspaces[0]);
+        } else if (userWorkspaces.length === 0) {
+            setCurrentWorkspace(null);
         }
 
     } catch (error) {

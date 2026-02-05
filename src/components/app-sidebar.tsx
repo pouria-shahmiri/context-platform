@@ -15,7 +15,8 @@ import {
   ListTodo,
   ArrowUpCircleIcon,
   ArrowLeft,
-  Database
+  Database,
+  Globe
 } from "lucide-react"
 
 import { NavMain, NavItem } from "@/components/nav-main"
@@ -287,6 +288,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <ModeToggle />
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              size="lg" 
+              onClick={() => setIsContextModalOpen(true)}
+              tooltip="Global Context"
+            >
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300">
+                <Globe className="size-4" />
+              </div>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">Global Context</span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {selectedSources.length} sources selected
+                </span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
              <StorageSettingsDialog 
                trigger={
