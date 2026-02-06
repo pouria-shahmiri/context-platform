@@ -12,6 +12,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { ArrowLeft, Download } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useWorkspace } from '../contexts/WorkspaceContext';
 import { getProductDefinition, updateNodeDescription } from '../services/productDefinitionService';
 import { exportProductDefinitionToExcel, exportProductDefinitionToMarkdown } from '../services/exportService';
 import TopicEditModal from '../components/ProductDefinition/TopicEditModal';

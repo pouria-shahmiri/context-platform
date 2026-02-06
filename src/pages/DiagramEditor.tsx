@@ -22,8 +22,6 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 
-const nodeTypes = { diagramNode: DiagramNode };
-
 const defaultNodeData: DiagramNodeData = {
   title: 'Block',
   description: '',

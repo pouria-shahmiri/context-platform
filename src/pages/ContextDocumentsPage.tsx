@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Trash2, FileText, Edit2, Folder, ChevronDown, MoreVertical, Search } from 'lucide-react';
+import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { useAuth } from '../contexts/AuthContext';
 import { getUserContextDocuments, createContextDocument, deleteContextDocument, renameContextDocument, assignContextDocumentToDirectory } from '../services/contextDocumentService';
 import { getUserDirectories, createDirectory, renameDirectory, deleteDirectory } from '../services/directoryService';
@@ -49,6 +50,10 @@ const ContextDocumentsPage: React.FC = () => {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
   const [renameNewTitle, setRenameNewTitle] = useState("");
+
+  // Delete State
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string, title: string, type: 'document' | 'directory' } | null>(null);
 
   const fetchDocuments = async () => {
     if (!user || !currentWorkspace) return;
@@ -114,15 +119,27 @@ const ContextDocumentsPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const handleDelete = (id: string, title: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm("Are you sure you want to delete this document?")) {
-        try {
-            await deleteContextDocument(id);
-            setDocuments(prev => prev.filter(d => d.id !== id));
-        } catch (error) {
-            alert("Failed to delete document");
+    setDeleteTarget({ id, title, type: 'document' });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+        if (deleteTarget.type === 'directory') {
+            await deleteDirectory(deleteTarget.id);
+            fetchDirectories();
+        } else {
+            await deleteContextDocument(deleteTarget.id);
+            setDocuments(prev => prev.filter(d => d.id !== deleteTarget.id));
         }
+        setDeleteDialogOpen(false);
+        setDeleteTarget(null);
+    } catch (error) {
+        console.error("Failed to delete item", error);
+        alert("Failed to delete item");
     }
   };
 
@@ -177,19 +194,12 @@ const ContextDocumentsPage: React.FC = () => {
     }
   };
 
-  const handleDeleteDirectory = async (id: string, e: React.MouseEvent) => {
+  const handleDeleteDirectory = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!user) return;
-    if (window.confirm("Are you sure you want to delete this directory? All documents inside will be moved to 'No Directory'.")) {
-      try {
-        console.log('Attempting to delete directory:', id);
-        await deleteDirectory(id, user.uid);
-        await fetchDirectories();
-        await fetchDocuments(); // To update document statuses
-      } catch (error: any) {
-        console.error('Failed to delete directory:', error);
-        alert(`Failed to delete directory: ${error.message || 'Unknown error'}`);
-      }
+    const dir = directories.find(d => d.id === id);
+    if (dir) {
+        setDeleteTarget({ id: dir.id, title: dir.title, type: 'directory' });
+        setDeleteDialogOpen(true);
     }
   };
 
@@ -397,7 +407,7 @@ const ContextDocumentsPage: React.FC = () => {
                             <Button 
                                 variant="ghost" 
                                 size="icon"
-                                onClick={(e) => handleDelete(doc.id, e)}
+                                onClick={(e) => handleDelete(doc.id, doc.title, e)}
                                 className="h-8 w-8 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
                             >
                                 <Trash2 size={16} />
@@ -481,6 +491,18 @@ const ContextDocumentsPage: React.FC = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <DeleteConfirmDialog 
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title={deleteTarget?.type === 'directory' ? "Delete Directory" : "Delete Document"}
+          description={deleteTarget?.type === 'directory' 
+              ? "Are you sure you want to delete this directory? All documents inside will be moved to 'No Directory'."
+              : "This action cannot be undone. This will permanently delete the document."
+          }
+          itemName={deleteTarget?.title || ''}
+          onConfirm={confirmDelete}
+        />
       </div>
     </div>
   );

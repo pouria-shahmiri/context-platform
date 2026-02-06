@@ -22,6 +22,8 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 
+import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
+
 const ProductDefinitionsPage: React.FC = () => {
   const { user } = useAuth();
   const { currentWorkspace } = useWorkspace();
@@ -39,6 +41,11 @@ const ProductDefinitionsPage: React.FC = () => {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
   const [renameNewTitle, setRenameNewTitle] = useState("");
+
+  // Delete State
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{id: string, title: string} | null>(null);
+
 
   const fetchDefinitions = async () => {
     if (!user) return;
@@ -73,15 +80,22 @@ const ProductDefinitionsPage: React.FC = () => {
       }
   };
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const handleDelete = (id: string, title: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm("Are you sure you want to delete this definition?")) {
-        try {
-            await deleteProductDefinition(id);
-            setDefinitions(prev => prev.filter(p => p.id !== id));
-        } catch (error) {
-            alert("Failed to delete definition");
-        }
+    setDeleteTarget({ id, title });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+        await deleteProductDefinition(deleteTarget.id);
+        setDefinitions(prev => prev.filter(p => p.id !== deleteTarget.id));
+        setDeleteDialogOpen(false);
+        setDeleteTarget(null);
+    } catch (error) {
+        console.error("Failed to delete definition", error);
+        alert("Failed to delete definition");
     }
   };
 
@@ -207,7 +221,7 @@ const ProductDefinitionsPage: React.FC = () => {
                              <Button size="icon" variant="ghost" onClick={(e) => handleRename(def.id, def.title, e)} className="h-8 w-8 cursor-pointer hover:bg-muted">
                                 <Edit2 size={14} />
                             </Button>
-                             <Button size="icon" variant="ghost" onClick={(e) => handleDelete(def.id, e)} className="h-8 w-8 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500">
+                             <Button size="icon" variant="ghost" onClick={(e) => handleDelete(def.id, def.title, e)} className="h-8 w-8 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500">
                                 <Trash2 size={14} />
                             </Button>
                         </div>
@@ -249,6 +263,15 @@ const ProductDefinitionsPage: React.FC = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <DeleteConfirmDialog 
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title="Delete Product Definition"
+          description="This action cannot be undone. This will permanently delete the product definition and all associated data."
+          itemName={deleteTarget?.title || ''}
+          onConfirm={confirmDelete}
+        />
       </div>
     </div>
   );

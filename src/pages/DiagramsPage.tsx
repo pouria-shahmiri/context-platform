@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Plus, MoreVertical, Trash2, ArrowRight, Clock } from 'lucide-react';
+import { Search, Plus, MoreVertical, Trash2, ArrowRight, Clock, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { Diagram } from '../types';
-import { getUserDiagrams, createDiagram, deleteDiagram } from '../services/diagramService';
+import { getUserDiagrams, createDiagram, deleteDiagram, updateDiagram } from '../services/diagramService';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,15 @@ const DiagramsPage: React.FC = () => {
   const [newTitle, setNewTitle] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
+  // Rename State
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
+  const [renameNewTitle, setRenameNewTitle] = useState("");
+
+  // Delete State
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string, title: string } | null>(null);
+
   const navigate = useNavigate();
 
   const fetchDiagrams = async () => {
@@ -57,13 +67,41 @@ const DiagramsPage: React.FC = () => {
     fetchDiagrams();
   }, [user, currentWorkspace]);
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this diagram?")) return;
+  const handleDelete = (e: React.MouseEvent, diagram: Diagram) => {
+    e.stopPropagation();
+    setDeleteTarget({ id: diagram.id, title: diagram.title });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deleteDiagram(id);
-      setDiagrams(prev => prev.filter(p => p.id !== id));
+      await deleteDiagram(deleteTarget.id);
+      setDiagrams(prev => prev.filter(p => p.id !== deleteTarget.id));
+      setDeleteDialogOpen(false);
+      setDeleteTarget(null);
     } catch (error) {
-      alert("Failed to delete diagram");
+      console.error("Failed to delete diagram", error);
+    }
+  };
+
+  const handleRename = (e: React.MouseEvent, diagram: Diagram) => {
+    e.stopPropagation();
+    setRenameTargetId(diagram.id);
+    setRenameNewTitle(diagram.title);
+    setRenameDialogOpen(true);
+  };
+
+  const confirmRename = async () => {
+    if (!renameTargetId || !renameNewTitle.trim()) return;
+    try {
+      await updateDiagram(renameTargetId, { title: renameNewTitle });
+      setDiagrams(prev => prev.map(d => d.id === renameTargetId ? { ...d, title: renameNewTitle } : d));
+      setRenameDialogOpen(false);
+      setRenameTargetId(null);
+      setRenameNewTitle("");
+    } catch (error) {
+      console.error("Failed to rename diagram", error);
     }
   };
 
@@ -138,6 +176,46 @@ const DiagramsPage: React.FC = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          {/* Rename Dialog */}
+          <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+            <DialogContent className="sm:max-w-[450px]">
+              <DialogHeader>
+                <DialogTitle>Rename Diagram</DialogTitle>
+                <DialogDescription>
+                  Enter a new name for your diagram.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col gap-4 py-4">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="rename-title">Title</Label>
+                  <Input
+                    id="rename-title"
+                    value={renameNewTitle}
+                    onChange={(e) => setRenameNewTitle(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={confirmRename} disabled={!renameNewTitle.trim()}>
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Delete Confirm Dialog */}
+           <DeleteConfirmDialog
+             open={deleteDialogOpen}
+             onOpenChange={setDeleteDialogOpen}
+             title="Delete Diagram"
+             description="Are you sure you want to delete this diagram? This action cannot be undone."
+             itemName={deleteTarget?.title || ''}
+             onConfirm={confirmDelete}
+           />
         </div>
 
         {/* Filter Bar */}
@@ -186,7 +264,10 @@ const DiagramsPage: React.FC = () => {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => handleDelete(diagram.id)} className="text-red-600 focus:text-red-600 cursor-pointer">
+                                            <DropdownMenuItem onClick={(e) => handleRename(e, diagram)} className="cursor-pointer">
+                                                <Pencil size={14} className="mr-2" /> Rename
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={(e) => handleDelete(e, diagram)} className="text-red-600 focus:text-red-600 cursor-pointer">
                                                 <Trash2 size={14} className="mr-2" /> Delete
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>

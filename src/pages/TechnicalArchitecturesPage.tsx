@@ -21,6 +21,8 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 
+import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
+
 export const TechnicalArchitecturesPage: React.FC = () => {
   const { user } = useAuth();
   const { currentWorkspace } = useWorkspace();
@@ -38,6 +40,10 @@ export const TechnicalArchitecturesPage: React.FC = () => {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
   const [renameNewTitle, setRenameNewTitle] = useState("");
+
+  // Delete State
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string, title: string } | null>(null);
 
   const fetchArchitectures = async () => {
     if (!user || !currentWorkspace) return;
@@ -74,15 +80,24 @@ export const TechnicalArchitecturesPage: React.FC = () => {
       }
   };
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm("Are you sure you want to delete this architecture?")) {
-        try {
-            await deleteTechnicalArchitecture(id);
-            setArchitectures(prev => prev.filter(p => p.id !== id));
-        } catch (error) {
-            alert("Failed to delete architecture");
-        }
+    const arch = architectures.find(a => a.id === id);
+    if (arch) {
+        setDeleteTarget({ id: arch.id, title: arch.title });
+        setDeleteDialogOpen(true);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+        await deleteTechnicalArchitecture(deleteTarget.id);
+        setArchitectures(prev => prev.filter(p => p.id !== deleteTarget.id));
+        setDeleteDialogOpen(false);
+        setDeleteTarget(null);
+    } catch (error) {
+        alert("Failed to delete architecture");
     }
   };
 
@@ -243,6 +258,15 @@ export const TechnicalArchitecturesPage: React.FC = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <DeleteConfirmDialog 
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title="Delete Technical Architecture"
+          description="This action cannot be undone. This will permanently delete the technical architecture and all associated data."
+          itemName={deleteTarget?.title || ''}
+          onConfirm={confirmDelete}
+        />
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, Search } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { 
     getPipelines, 
@@ -46,6 +46,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
+
 export const TechnicalTaskBoard: React.FC = () => {
     const { user } = useAuth();
     const { currentWorkspace } = useWorkspace();
@@ -53,6 +55,7 @@ export const TechnicalTaskBoard: React.FC = () => {
     const [tasks, setTasks] = useState<TechnicalTask[]>([]);
     const [architectures, setArchitectures] = useState<TechnicalArchitecture[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState<string>('');
 
     // Create Task Modal
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -67,6 +70,10 @@ export const TechnicalTaskBoard: React.FC = () => {
     // Rename Pipeline State
     const [editingPipeline, setEditingPipeline] = useState<Pipeline | null>(null);
     const [renameTitle, setRenameTitle] = useState('');
+
+    // Delete State
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<{ id: string, title: string, type: 'pipeline' | 'task' } | null>(null);
 
     useEffect(() => {
         if (user && currentWorkspace) {
@@ -119,33 +126,12 @@ export const TechnicalTaskBoard: React.FC = () => {
         }
     };
 
-    const handleDeletePipeline = async (pipelineId: string) => {
+    const handleDeletePipeline = (pipelineId: string) => {
         const pipeline = pipelines.find(p => p.id === pipelineId);
         if (!pipeline) return;
 
-        if (pipelines.length <= 1) {
-            alert("You must have at least one pipeline.");
-            return;
-        }
-
-        if (pipeline.title === "Backlog") {
-            alert("The Backlog pipeline cannot be deleted.");
-            return;
-        }
-
-        // Check if pipeline has tasks
-        const hasTasks = tasks.some(t => t.pipelineId === pipelineId);
-        if (hasTasks) {
-            alert("Cannot delete pipeline with tasks. Please move or delete tasks first.");
-            return;
-        }
-
-        if (confirm(`Are you sure you want to delete the pipeline "${pipeline.title}"?`)) {
-            const success = await deletePipeline(pipelineId);
-            if (success) {
-                setPipelines(pipelines.filter(p => p.id !== pipelineId));
-            }
-        }
+        setDeleteTarget({ id: pipeline.id, title: pipeline.title, type: 'pipeline' });
+        setDeleteDialogOpen(true);
     };
 
     const handleRenamePipeline = async () => {
@@ -157,12 +143,34 @@ export const TechnicalTaskBoard: React.FC = () => {
         setRenameTitle('');
     };
 
-    const handleDeleteTask = async (taskId: string) => {
-        const success = await deleteTechnicalTask(taskId);
-        if (success) {
-            setTasks(tasks.filter(t => t.id !== taskId));
-        } else {
-            alert("Failed to delete task. Please try again.");
+    const handleDeleteTask = (taskId: string) => {
+        const task = tasks.find(t => t.id === taskId);
+        if (task) {
+            setDeleteTarget({ id: task.id, title: task.title, type: 'task' });
+            setDeleteDialogOpen(true);
+        }
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
+        try {
+            if (deleteTarget.type === 'pipeline') {
+                const success = await deletePipeline(deleteTarget.id);
+                if (success) {
+                    setPipelines(pipelines.filter(p => p.id !== deleteTarget.id));
+                }
+            } else {
+                const success = await deleteTechnicalTask(deleteTarget.id);
+                if (success) {
+                    setTasks(tasks.filter(t => t.id !== deleteTarget.id));
+                } else {
+                    console.error("Failed to delete task. Please try again.");
+                }
+            }
+            setDeleteDialogOpen(false);
+            setDeleteTarget(null);
+        } catch (error) {
+            console.error(`Failed to delete ${deleteTarget.type}`);
         }
     };
 
@@ -439,6 +447,18 @@ export const TechnicalTaskBoard: React.FC = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <DeleteConfirmDialog 
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                title={deleteTarget?.type === 'pipeline' ? "Delete Pipeline" : "Delete Task"}
+                description={deleteTarget?.type === 'pipeline'
+                    ? "Are you sure you want to delete this pipeline?"
+                    : "This action cannot be undone. This will permanently delete the task."
+                }
+                itemName={deleteTarget?.title || ''}
+                onConfirm={confirmDelete}
+            />
         </div>
     );
 };

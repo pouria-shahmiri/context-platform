@@ -25,6 +25,7 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
+import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
 
 const PyramidsPage: React.FC = () => {
   const { user } = useAuth();
@@ -38,6 +39,10 @@ const PyramidsPage: React.FC = () => {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
   const [renameNewTitle, setRenameNewTitle] = useState("");
+
+  // Delete State
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string, title: string } | null>(null);
 
   const fetchPyramids = async () => {
     if (!user) return;
@@ -55,12 +60,20 @@ const PyramidsPage: React.FC = () => {
     fetchPyramids();
   }, [user, currentWorkspace]);
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this pyramid?")) return;
+  const handleDelete = (id: string, title: string) => {
+    setDeleteTarget({ id, title });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deletePyramid(id);
-      setPyramids(prev => prev.filter(p => p.id !== id));
+      await deletePyramid(deleteTarget.id);
+      setPyramids(prev => prev.filter(p => p.id !== deleteTarget.id));
+      setDeleteDialogOpen(false);
+      setDeleteTarget(null);
     } catch (error) {
+      console.error("Failed to delete pyramid", error);
       alert("Failed to delete pyramid");
     }
   };
@@ -163,6 +176,15 @@ const PyramidsPage: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DeleteConfirmDialog 
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Pyramid"
+        description="This action cannot be undone. This will permanently delete the pyramid and all associated data."
+        itemName={deleteTarget?.title || ''}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 };

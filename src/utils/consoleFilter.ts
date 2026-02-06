@@ -11,7 +11,8 @@ export const initConsoleFilter = (): void => {
       'Extension',
       'content.js',
       'injected.js',
-      'Cross-Origin-Opener-Policy'
+      'Cross-Origin-Opener-Policy',
+      'BloomFilter'
     ];
 
     console.error = (...args: unknown[]): void => {

@@ -13,7 +13,7 @@ import {
 
 interface PyramidListProps {
   pyramids: Pyramid[];
-  onDelete: (id: string) => void;
+  onDelete: (id: string, title: string) => void;
 }
 
 const PyramidList: React.FC<PyramidListProps> = ({ pyramids, onDelete }) => {
@@ -49,7 +49,7 @@ const PyramidList: React.FC<PyramidListProps> = ({ pyramids, onDelete }) => {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => onDelete(pyramid.id)} className="text-red-600 focus:text-red-600 cursor-pointer">
+                                <DropdownMenuItem onClick={() => onDelete(pyramid.id, pyramid.title)} className="text-red-600 focus:text-red-600 cursor-pointer">
                                     <Trash2 size={14} className="mr-2" /> Delete
                                 </DropdownMenuItem>
                             </DropdownMenuContent>

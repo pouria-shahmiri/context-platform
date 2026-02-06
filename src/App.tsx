@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { GlobalProvider } from './contexts/GlobalContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
+import { ErrorBoundary } from './components/ui/error-boundary';
 import LandingPage from './pages/LandingPage';
 import DocsPage from './pages/DocsPage';
 import AboutPage from './pages/AboutPage';
@@ -47,6 +48,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <ErrorBoundary>
         <Router>
           <AuthProvider>
             <WorkspaceProvider>
@@ -237,7 +239,8 @@ function App() {
             </WorkspaceProvider>
           </AuthProvider>
         </Router>
-      </ThemeProvider>
+      </ErrorBoundary>
+    </ThemeProvider>
     );
   }
 

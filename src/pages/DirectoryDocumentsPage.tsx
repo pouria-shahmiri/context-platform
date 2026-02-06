@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Folder, ArrowLeft, FileText } from 'lucide-react';
+import { Folder, ArrowLeft, FileText, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getDirectory, getDirectoryDocuments } from '../services/directoryService';
+import { deleteContextDocument } from '../services/contextDocumentService';
 import { ContextDocument, Directory } from '../types';
+import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 
 import { useWorkspace } from '../contexts/WorkspaceContext';
 import { Button } from '@/components/ui/button';
@@ -18,6 +20,10 @@ const DirectoryDocumentsPage: React.FC = () => {
   const [directory, setDirectory] = useState<Directory | null>(null);
   const [documents, setDocuments] = useState<ContextDocument[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Delete State
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string, title: string } | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -35,6 +41,25 @@ const DirectoryDocumentsPage: React.FC = () => {
     };
     load();
   }, [user, directoryId, currentWorkspace]);
+
+  const handleDelete = (id: string, title: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeleteTarget({ id, title });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+        await deleteContextDocument(deleteTarget.id);
+        setDocuments(prev => prev.filter(d => d.id !== deleteTarget.id));
+        setDeleteDialogOpen(false);
+        setDeleteTarget(null);
+    } catch (error) {
+        console.error("Failed to delete document", error);
+        alert("Failed to delete document");
+    }
+  };
 
   return (
     <div className="h-full flex-grow bg-background">
@@ -78,9 +103,19 @@ const DirectoryDocumentsPage: React.FC = () => {
                       return date.toLocaleDateString();
                     })()}
                   </span>
-                  <Button variant="secondary" size="sm" className="cursor-pointer" onClick={() => navigate(`/context-document/${doc.id}`)}>
-                    Open
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
+                        onClick={(e) => handleDelete(doc.id, doc.title, e)}
+                    >
+                        <Trash2 size={16} />
+                    </Button>
+                    <Button variant="secondary" size="sm" className="h-8 cursor-pointer" onClick={() => navigate(`/context-document/${doc.id}`)}>
+                        Open
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}
@@ -91,6 +126,15 @@ const DirectoryDocumentsPage: React.FC = () => {
             )}
           </div>
         )}
+        
+        <DeleteConfirmDialog 
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title="Delete Document"
+          description="This action cannot be undone. This will permanently delete the document."
+          itemName={deleteTarget?.title || ''}
+          onConfirm={confirmDelete}
+        />
       </div>
     </div>
   );

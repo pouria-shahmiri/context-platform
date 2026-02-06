@@ -32,6 +32,7 @@ import {
   PromptInputSubmit,
   PromptInputTools,
 } from '../components/ai-elements/prompt-input';
+import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 
 const AiChatPage: React.FC = () => {
   const { user, apiKey } = useAuth();
@@ -41,6 +42,10 @@ const AiChatPage: React.FC = () => {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
+  // Delete State
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string, title: string } | null>(null);
 
   // Subscribe to conversations list
   useEffect(() => {
@@ -78,13 +83,24 @@ const AiChatPage: React.FC = () => {
     setMessages([]);
   };
 
-  const handleDeleteConversation = async (e: React.MouseEvent, convId: string) => {
+  const handleDeleteConversation = (e: React.MouseEvent, convId: string, title: string) => {
     e.stopPropagation();
-    if (window.confirm("Delete this conversation?")) {
-        if (activeConversationId === convId) {
+    setDeleteTarget({ id: convId, title: title || 'New Conversation' });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+        if (activeConversationId === deleteTarget.id) {
             setActiveConversationId(null);
         }
-        await deleteConversation(convId);
+        await deleteConversation(deleteTarget.id);
+        setDeleteDialogOpen(false);
+        setDeleteTarget(null);
+    } catch (error) {
+        console.error("Failed to delete conversation", error);
+        alert("Failed to delete conversation");
     }
   };
 
@@ -189,7 +205,7 @@ const AiChatPage: React.FC = () => {
                   </span>
                   <button 
                     className="opacity-0 group-hover:opacity-100 p-1 hover:bg-background rounded text-muted-foreground transition-opacity"
-                    onClick={(e) => handleDeleteConversation(e, conv.id)}
+                    onClick={(e) => handleDeleteConversation(e, conv.id, conv.title)}
                   >
                     <Trash2 size={14} />
                   </button>
@@ -286,6 +302,14 @@ const AiChatPage: React.FC = () => {
             </div>
          </div>
       </div>
+      <DeleteConfirmDialog 
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Conversation"
+        description="This action cannot be undone. This will permanently delete the conversation history."
+        itemName={deleteTarget?.title || 'Conversation'}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 };
