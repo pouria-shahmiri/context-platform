@@ -28,6 +28,8 @@ import { TechnicalTaskDetail } from './pages/TechnicalTaskDetail';
 import AiChatPage from './pages/AiChatPage';
 
 import AuthenticatedLayout from './components/Layout/AuthenticatedLayout';
+import { PWAProvider } from './contexts/PWAContext';
+import { PWAPrompt } from './components/PWA/PWAPrompt';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading, isGuest } = useAuth();
@@ -49,6 +51,7 @@ function App() {
           <AuthProvider>
             <WorkspaceProvider>
               <GlobalProvider>
+                <PWAProvider>
                 <Routes>
                   <Route path="/" element={<LandingPage />} />
                 <Route path="/docs" element={<DocsPage />} />
@@ -228,6 +231,8 @@ function App() {
                 } 
               />
                 </Routes>
+                <PWAPrompt />
+                </PWAProvider>
               </GlobalProvider>
             </WorkspaceProvider>
           </AuthProvider>
