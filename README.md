@@ -88,34 +88,6 @@ The platform is built around the **Pyramid Principle**:
 
 ---
 
-## � Project Structure
-
-Understanding the codebase layout will help you navigate faster:
-
-```text
-src/
-├── components/        # Reusable UI components (Buttons, Inputs, etc.)
-│   ├── ui/           # Generic UI elements (often from shadcn/ui)
-│   └── ...
-├── contexts/          # React Contexts (Auth, Global State)
-├── hooks/             # Custom React Hooks
-├── pages/             # Main Application Pages (Routes)
-│   ├── AiChatPage.tsx              # Chat interface
-│   ├── ContextDocumentsPage.tsx    # Knowledge base management
-│   ├── DiagramEditor.tsx           # Visual diagramming tool
-│   ├── ProductDefinitionEditor.tsx # Product spec editor
-│   ├── PyramidsPage.tsx            # The core Pyramid thinking tool
-│   └── ...
-├── services/          # API & Business Logic
-│   ├── anthropic.ts   # AI integration
-│   ├── firebase.ts    # Database connection
-│   └── ...
-├── types/             # TypeScript definitions
-└── App.tsx            # Main App component & Routing
-```
-
----
-
 ## 🚀 Getting Started
 
 ### Prerequisites
