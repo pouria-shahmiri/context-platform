@@ -18,7 +18,7 @@ The main page for the App must include:
   - **Delete**: A secure delete mechanism where the user **must type the name of the object** to confirm deletion.
 - **Search**:
   - A search bar or functionality to filter/find objects within the App page.
-
+ 
 ## 3. Global Context Integration
 - **Context Category**: The App's domain objects must be registered as a distinct category in the Global Context.
 - **Context Usage**: Objects from this App must be selectable and usable within the Global Context (e.g., for AI context or cross-referencing).
