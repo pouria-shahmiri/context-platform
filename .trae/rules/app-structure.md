@@ -9,7 +9,7 @@ This document defines the mandatory structure and requirements for all "Apps" wi
 
 ## 1. Dashboard Integration
 - **Workspace Card**: Every App must have a dedicated card component displayed on the main Workspace Dashboard.
-
+ 
 ## 2. App Page Requirements
 The main page for the App must include:
 - **CRUD Operations**:
