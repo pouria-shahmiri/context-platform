@@ -30,3 +30,19 @@ export interface ProductDefinition {
   data: Record<string, ProductDefinitionNode>;
 }
 ```
+
+## Logic & Rules
+
+The core business logic is implemented in [src/services/productDefinitionService.ts](file:///home/pouria/projects/pyramid-solver/src/services/productDefinitionService.ts).
+
+### Core Functions
+- **Template Initialization**: `createProductDefinition` creates a new definition with a pre-defined tree structure:
+  1. **Problem & Goals**: (Problem Statement, Investment Limits, Baseline Comparison)
+  2. **Solution Concepts**: (Key Flows, Rough Sketches, Scope Boundaries)
+  3. **Risks & Unknowns**: (Technical Risks, Design Challenges, Risk Mitigation)
+  4. **Implementation Strategy**: (Components, Complexity Analysis, Milestones)
+- **Data Normalization**: `mapDefinitionFromStorage` ensures that database snake_case fields are correctly mapped to TypeScript camelCase properties.
+
+### Invariants
+- New definitions always start with the standard 4-section template.
+- The `root` node always has ID "root".

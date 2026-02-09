@@ -33,3 +33,18 @@ export interface TechnicalTaskData {
     preservation_rules: Section<PreservationRulesMain, PreservationRulesAdvanced>;
 }
 ```
+
+## Logic & Rules
+
+The core business logic is implemented in [src/services/technicalTaskService.ts](file:///home/pouria/projects/pyramid-solver/src/services/technicalTaskService.ts).
+
+### Core Functions
+- **Pipeline Management**: `getPipelines` fetches task pipelines and automatically deduplicates "Backlog" pipelines if multiple are found (merging tasks into one).
+- **Batch Updates**: 
+  - `batchUpdatePipelines`: Updates the order of pipelines.
+  - `batchUpdateTasks`: Updates the order and pipeline assignment of tasks (drag-and-drop).
+- **Dual Write**: `batchUpdateTasks` updates both `technicalTasks` (local/app context) and `globalTasks` (global context) to ensure visibility.
+
+### Invariants
+- A "Backlog" pipeline is automatically created if no pipelines exist.
+- Tasks must always belong to a `pipelineId`.

@@ -22,3 +22,17 @@ export interface Pyramid {
   contextSources?: ContextSource[];
 }
 ```
+
+## Logic & Rules
+
+The core business logic is implemented in [src/services/pyramidService.ts](file:///home/pouria/projects/pyramid-solver/src/services/pyramidService.ts).
+
+### Core Functions
+- **Initialization**: `createPyramid` initializes a new pyramid with a standard 8x8 grid (64 blocks) of type 'question'.
+- **Duplication**: `duplicatePyramid` creates a deep copy of a pyramid, appending "(Copy)" to the title, but resetting the ID and timestamps.
+- **Sorting**: `getUserPyramids` returns pyramids sorted by `lastModified` descending (newest first).
+- **Real-time Sync**: `subscribeToPyramid` provides real-time updates via the storage adapter's subscription mechanism.
+
+### Invariants
+- Every pyramid MUST have exactly 64 blocks initialized upon creation.
+- Deleting a pyramid (`deletePyramid`) permanently removes it from storage.

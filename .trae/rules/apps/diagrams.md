@@ -25,3 +25,15 @@ export interface Diagram {
   edges: any[];
 }
 ```
+
+## Logic & Rules
+
+The core business logic is implemented in [src/services/diagramService.ts](file:///home/pouria/projects/pyramid-solver/src/services/diagramService.ts).
+
+### Core Functions
+- **CRUD**: Standard `createDiagram`, `getDiagram`, `updateDiagram`, `deleteDiagram` operations.
+- **Initialization**: New diagrams start with empty `nodes` and `edges` arrays.
+- **Timestamps**: `updateDiagram` automatically updates the `lastModified` timestamp.
+
+### Invariants
+- `nodes` and `edges` default to empty arrays if undefined in storage.

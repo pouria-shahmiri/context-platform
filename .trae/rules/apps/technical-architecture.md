@@ -113,3 +113,20 @@ export interface TechnicalArchitecture {
   };
 }
 ```
+
+## Logic & Rules
+
+The core business logic is implemented in [src/services/technicalArchitectureService.ts](file:///home/pouria/projects/pyramid-solver/src/services/technicalArchitectureService.ts).
+
+### Core Functions
+- **Template Initialization**: `createTechnicalArchitecture` initializes a comprehensive schema with empty placeholders for all major architectural sections:
+  - System Architecture
+  - Technology Stack
+  - Code Organization
+  - Design Patterns
+  - API Standards
+  - Security Standards
+- **Data Mapping**: `mapArchitectureFromStorage` handles the conversion from storage format to the TypeScript interface.
+
+### Invariants
+- New architectures are always initialized with the full, deep structure to ensure UI components don't crash on missing nested fields.
