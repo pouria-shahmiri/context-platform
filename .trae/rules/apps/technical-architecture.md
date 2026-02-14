@@ -1,5 +1,6 @@
 ---
 alwaysApply: false
+category: "Technical"
 ---
 # Technical Architecture Rules
 

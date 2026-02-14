@@ -1,5 +1,6 @@
 ---
 alwaysApply: false
+category: "Product design & Management"
 ---
 # UI/UX Architecture Rules
 

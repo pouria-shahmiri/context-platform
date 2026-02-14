@@ -9,6 +9,7 @@ This document defines the mandatory structure and requirements for all "Apps" wi
 
 ## 1. Dashboard Integration
 - **Workspace Card**: Every App must have a dedicated card component displayed on the main Workspace Dashboard.
+- **Category Metadata**: Each App must declare a `category` in its rule file frontmatter (`.trae/rules/apps/*.md`). The Dashboard groups app cards by this category using simple section titles and dividers.
  
 ## 2. App Page Requirements
 The main page for the App must include:
@@ -37,5 +38,6 @@ The main page for the App must include:
 | **Local Search** | Filter objects in App Page |
 | **Global Context** | Registered as Category & Usable |
 | **Documentation** | Update .trae/rules/apps/ on change if need to change |
+| **Category** | Declared in app rule frontmatter; used for Dashboard grouping |
 
 Any additional features are specific to the App, but these base requirements are mandatory for consistency. Refer to the specific app rule file in `.trae/rules/apps/` for detailed implementation guidelines.

@@ -1,5 +1,6 @@
 ---
 alwaysApply: false
+category: "Knowledge Base"
 ---
 # Context Documents Rules
 

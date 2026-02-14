@@ -1,5 +1,6 @@
 ---
 alwaysApply: false
+category: "Problem Solving, Thinking and Planning"
 ---
 # Diagrams Rules
 
