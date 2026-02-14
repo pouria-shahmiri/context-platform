@@ -21,6 +21,7 @@
   "registries": {
     "@animate-ui": "https://animate-ui.com/r/{name}.json",
     "@ai-elements": "https://ai-sdk.dev/elements/api/registry/{name}.json",
-    "@shadcn-editor": "https://shadcn-editor.vercel.app/r/{name}.json"
+    "@shadcn-editor": "https://shadcn-editor.vercel.app/r/{name}.json",
+    "@cardcn": "https://cardcn.dev/r/{name}.json"
   }
 }
